@@ -1,5 +1,6 @@
 import json
 import random
+import requests
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
@@ -8,8 +9,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.conf import settings
+
 from .models import PreguntaEducativa, AnalisisEcografia
-from .services import poe_service
+
 
 def registro_usuario(request):
     if request.method == 'POST':
@@ -69,7 +72,8 @@ def educativo_sesion(request, tipo_sesion):
         'S3': 'Sesión 3: Verdadero o Falso',
     }
     
-    preguntas = PreguntaEducativa.objects.filter(sesion=tipo_sesion)
+    # Se añade prefetch_related('opciones') para traer las alternativas A, B, C y D de la Sesión 2
+    preguntas = PreguntaEducativa.objects.filter(sesion=tipo_sesion).prefetch_related('opciones')
     nombre = nombres_sesion.get(tipo_sesion, 'Sesión Educativa')
     
     context = {
@@ -82,11 +86,6 @@ def educativo_sesion(request, tipo_sesion):
 
 @login_required(login_url='iniciar_sesion')
 def analisis_imagen(request):
-    """
-    Permite al paciente subir una imagen (ecografía/mamografía) y guarda el
-    registro del análisis. El cálculo de riesgo es un placeholder por ahora:
-    aquí es donde se debe conectar el modelo de IA real (ver services/poe_service.py).
-    """
     resultado = None
 
     if request.method == 'POST':
@@ -96,7 +95,6 @@ def analisis_imagen(request):
             messages.error(request, 'Debes seleccionar una imagen antes de continuar.')
             return redirect('analisis_imagen')
 
-        # --- PLACEHOLDER: reemplazar por la llamada al modelo de IA real ---
         porcentaje_riesgo = round(random.uniform(5, 40), 1)
         if porcentaje_riesgo < 15:
             rango_alerta = 'Verde'
@@ -104,7 +102,6 @@ def analisis_imagen(request):
             rango_alerta = 'Amarillo'
         else:
             rango_alerta = 'Rojo'
-        # --------------------------------------------------------------
 
         analisis = AnalisisEcografia.objects.create(
             usuario=request.user,
@@ -133,9 +130,7 @@ def asistente_virtual(request):
 @require_POST
 def asistente_virtual_mensaje(request):
     """
-    Endpoint AJAX que recibe el mensaje del usuario y devuelve la respuesta
-    de Sonia. Delega la generación de la respuesta a services/poe_service.py,
-    que hoy responde con un mensaje de referencia hasta que se conecte la API real.
+    Endpoint AJAX para la asistente virtual Sonia.
     """
     try:
         data = json.loads(request.body or '{}')
@@ -147,6 +142,45 @@ def asistente_virtual_mensaje(request):
     if not mensaje_usuario:
         return JsonResponse({'error': 'Mensaje vacío.'}, status=400)
 
-    respuesta = poe_service.obtener_respuesta_sonia(mensaje_usuario)
+    try:
+        api_key = getattr(settings, 'GEMINI_API_KEY', None)
+        if not api_key:
+            return JsonResponse({'respuesta': 'Falta configurar GEMINI_API_KEY en settings.py.'})
 
-    return JsonResponse({'respuesta': respuesta})
+        # URL con el modelo actualizado gemini-1.5-flash
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+
+        prompt_sistema = (
+            "Eres Sonia, una asistente virtual empática, cercana y profesional especializada en prevención de salud mamaria en Chile. "
+            "Tu objetivo es resolver dudas comunes sobre autoexamen, mamografías y síntomas de alerta. "
+            "Responde siempre de forma clara, directa y amable. "
+            "IMPORTANTE: No das diagnósticos médicos definitivos. Siempre recomienda consultar a un profesional de la salud o acudir a un CESFAM/centro médico ante dudas o anomalías."
+        )
+
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": f"Instrucción: {prompt_sistema}\n\nPregunta: {mensaje_usuario}"}
+                    ]
+                }
+            ]
+        }
+
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        res_data = response.json()
+
+        if response.status_code == 200:
+            texto_respuesta = res_data['candidates'][0]['content']['parts'][0]['text']
+            return JsonResponse({'respuesta': texto_respuesta})
+        else:
+            detalles = res_data.get('error', {}).get('message', response.text)
+            return JsonResponse({'respuesta': f'Ocurrió un error al procesar tu solicitud: {detalles}'})
+
+    except Exception as e:
+        print(f"Error en Sonia Chatbot: {e}")
+        return JsonResponse({'respuesta': f'Ocurrió un error al procesar tu solicitud: {str(e)}'})

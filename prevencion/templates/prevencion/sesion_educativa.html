@@ -22,16 +22,40 @@
                 <div class="card-body p-4">
                     <h5 class="fw-bold mb-3">{{ forloop.counter }}. {{ p.enunciado }}</h5>
                     
-                    <div class="d-flex gap-2 mb-3">
-                        {% if p.respuesta_correcta %}
-                            <button class="btn btn-outline-primary px-4" onclick="verificar('{{ p.id }}', true, true)">Verdadero / Realidad</button>
-                            <button class="btn btn-outline-danger px-4" onclick="verificar('{{ p.id }}', false, true)">Falso / Mito</button>
-                        {% else %}
-                            <button class="btn btn-outline-primary px-4" onclick="verificar('{{ p.id }}', true, false)">Verdadero / Realidad</button>
-                            <button class="btn btn-outline-danger px-4" onclick="verificar('{{ p.id }}', false, false)">Falso / Mito</button>
-                        {% endif %}
-                    </div>
+                    {% if p.sesion == 'S2' %}
+                        <!-- VISTA PARA SESIÓN 2: SELECCIÓN MÚLTIPLE -->
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            {% for op in p.opciones.all %}
+                                <button 
+                                    type="button"
+                                    class="btn btn-outline-primary text-start px-3 py-2 w-100 btn-opcion-{{ p.id }}" 
+                                    data-pregunta="{{ p.id }}"
+                                    data-opcion-id="{{ op.id }}"
+                                    data-correcta="{{ op.es_correcta|lower }}"
+                                    onclick="verificarOpcion(this)"
+                                >
+                                    {{ op.texto_opcion }}
+                                </button>
+                            {% empty %}
+                                <div class="alert alert-warning py-2 small">
+                                    Esta pregunta no tiene opciones registradas en la base de datos.
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- VISTA PARA SESIÓN 1 Y 3: VERDADERO / FALSO -->
+                        <div class="d-flex gap-2 mb-3">
+                            {% if p.respuesta_correcta %}
+                                <button type="button" class="btn btn-outline-primary px-4 btn-opcion-{{ p.id }}" data-valor="true" onclick="verificarVF('{{ p.id }}', true, true, this)">Verdadero / Realidad</button>
+                                <button type="button" class="btn btn-outline-danger px-4 btn-opcion-{{ p.id }}" data-valor="false" onclick="verificarVF('{{ p.id }}', false, true, this)">Falso / Mito</button>
+                            {% else %}
+                                <button type="button" class="btn btn-outline-primary px-4 btn-opcion-{{ p.id }}" data-valor="true" onclick="verificarVF('{{ p.id }}', true, false, this)">Verdadero / Realidad</button>
+                                <button type="button" class="btn btn-outline-danger px-4 btn-opcion-{{ p.id }}" data-valor="false" onclick="verificarVF('{{ p.id }}', false, false, this)">Falso / Mito</button>
+                            {% endif %}
+                        </div>
+                    {% endif %}
 
+                    <!-- CUADRO DE RETROALIMENTACIÓN Y EXPLICACIÓN -->
                     <div id="retro-{{ p.id }}" class="alert d-none mt-3" role="alert">
                         <h6 id="titulo-{{ p.id }}" class="fw-bold"></h6>
                         <p id="explicacion-{{ p.id }}" class="m-0 small">{{ p.explicacion_medica }}</p>
@@ -48,20 +72,119 @@
     </div>
 
     <script>
-        function verificar(id, seleccion, respuestaCorrecta) {
-            const cuadroRetro = document.getElementById('retro-' + id);
-            const titulo = document.getElementById('titulo-' + id);
-
-            cuadroRetro.classList.remove('d-none', 'alert-success', 'alert-danger');
-
-            if (seleccion === respuestaCorrecta) {
-                cuadroRetro.classList.add('alert-success');
-                titulo.innerText = "¡Correcto! 🎉";
-            } else {
-                cuadroRetro.classList.add('alert-danger');
-                titulo.innerText = "Respuesta Incorrecta ⚠️";
+        // Guarda en memoria el texto original de la BD la primera vez
+        function respaldarTextoOriginal(elemento) {
+            if (!elemento.getAttribute('data-texto-original')) {
+                elemento.setAttribute('data-texto-original', elemento.innerText);
             }
         }
+
+        // Guarda la selección en localStorage
+        function guardarRespuesta(idPregunta, esCorrecta, opcionSeleccionada) {
+            const respGuardadas = JSON.parse(localStorage.getItem('respuestas_usuario') || '{}');
+            respGuardadas[idPregunta] = {
+                esCorrecta: esCorrecta,
+                opcionSeleccionada: opcionSeleccionada
+            };
+            localStorage.setItem('respuestas_usuario', JSON.stringify(respGuardadas));
+        }
+
+        // Bloquea los botones de la pregunta una vez respondida
+        function deshabilitarOpciones(idPregunta) {
+            const botones = document.querySelectorAll('.btn-opcion-' + idPregunta);
+            botones.forEach(btn => btn.disabled = true);
+        }
+
+        // Función para verificar Verdadero/Falso (Sesión 1 y 3)
+        function verificarVF(id, seleccion, respuestaCorrecta, botonClickeado) {
+            const cuadroRetro = document.getElementById('retro-' + id);
+            const titulo = document.getElementById('titulo-' + id);
+            const explicacion = document.getElementById('explicacion-' + id);
+
+            respaldarTextoOriginal(explicacion);
+            cuadroRetro.classList.remove('d-none', 'alert-success', 'alert-danger');
+
+            const esCorrecta = (seleccion === respuestaCorrecta);
+
+            if (esCorrecta) {
+                cuadroRetro.classList.add('alert-success');
+                titulo.innerText = "¡Correcto!";
+                explicacion.innerText = explicacion.getAttribute('data-texto-original');
+            } else {
+                cuadroRetro.classList.add('alert-danger');
+                titulo.innerText = "Respuesta Incorrecta";
+                explicacion.innerText = "Esa opción no es correcta para esta afirmación. Revisa nuevamente e inténtalo otra vez.";
+            }
+
+            guardarRespuesta(id, esCorrecta, seleccion.toString());
+            deshabilitarOpciones(id);
+            if (botonClickeado) botonClickeado.classList.add('active');
+        }
+
+        // Función para verificar Selección Múltiple (Sesión 2)
+        function verificarOpcion(boton) {
+            const idPregunta = boton.getAttribute('data-pregunta');
+            const opcionId = boton.getAttribute('data-opcion-id');
+            const esCorrecta = boton.getAttribute('data-correcta') === 'true';
+
+            const cuadroRetro = document.getElementById('retro-' + idPregunta);
+            const titulo = document.getElementById('titulo-' + idPregunta);
+            const explicacion = document.getElementById('explicacion-' + idPregunta);
+
+            respaldarTextoOriginal(explicacion);
+            cuadroRetro.classList.remove('d-none', 'alert-success', 'alert-danger');
+
+            if (esCorrecta) {
+                cuadroRetro.classList.add('alert-success');
+                titulo.innerText = "¡Respuesta Correcta!";
+                explicacion.innerText = explicacion.getAttribute('data-texto-original');
+            } else {
+                cuadroRetro.classList.add('alert-danger');
+                titulo.innerText = "Respuesta Incorrecta";
+                explicacion.innerText = "Esa opción NO ES CORRECTA para esta pregunta. Revisa las alternativas e inténtalo de nuevo.";
+            }
+
+            guardarRespuesta(idPregunta, esCorrecta, opcionId);
+            deshabilitarOpciones(idPregunta);
+            boton.classList.add('active');
+        }
+
+        // Al recargar la página (F5) o volver a ella, se restauran los estados
+        document.addEventListener("DOMContentLoaded", function() {
+            const respGuardadas = JSON.parse(localStorage.getItem('respuestas_usuario') || '{}');
+
+            Object.keys(respGuardadas).forEach(idPregunta => {
+                const data = respGuardadas[idPregunta];
+                const cuadroRetro = document.getElementById('retro-' + idPregunta);
+                const titulo = document.getElementById('titulo-' + idPregunta);
+                const explicacion = document.getElementById('explicacion-' + idPregunta);
+
+                if (cuadroRetro && titulo && explicacion) {
+                    respaldarTextoOriginal(explicacion);
+                    cuadroRetro.classList.remove('d-none', 'alert-success', 'alert-danger');
+
+                    if (data.esCorrecta) {
+                        cuadroRetro.classList.add('alert-success');
+                        titulo.innerText = "¡Respuesta Correcta!";
+                        explicacion.innerText = explicacion.getAttribute('data-texto-original');
+                    } else {
+                        cuadroRetro.classList.add('alert-danger');
+                        titulo.innerText = "Respuesta Incorrecta";
+                        explicacion.innerText = "Esa opción NO ES CORRECTA para esta pregunta. Ya seleccionaste una respuesta previa.";
+                    }
+
+                    // Marca la opción elegida y deshabilita todos los botones de esa pregunta
+                    const botones = document.querySelectorAll('.btn-opcion-' + idPregunta);
+                    botones.forEach(btn => {
+                        btn.disabled = true;
+                        if (btn.getAttribute('data-opcion-id') === data.opcionSeleccionada || 
+                            btn.getAttribute('data-valor') === data.opcionSeleccionada) {
+                            btn.classList.add('active');
+                        }
+                    });
+                }
+            });
+        });
     </script>
     <script src="{% static 'prevencion/js/animaciones.js' %}"></script>
 </body>

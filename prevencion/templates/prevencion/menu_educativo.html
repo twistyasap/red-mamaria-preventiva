@@ -6,141 +6,142 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Módulo Educativo - Salud Mamaria</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<<<<<<< HEAD
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-=======
->>>>>>> f7d06a3fa6412609bbe009a9841b700e2a2901b6
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}">
 </head>
 <body class="bg-light py-5">
     <div class="container">
+        <!-- Navegación Superior -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">← Volver al Inicio</a>
-            <span class="badge bg-primary fs-6">Módulo Educativo</span>
+            <a href="{% url 'inicio' %}" class="btn btn-outline-secondary px-4 py-2 rounded-pill fw-semibold">
+                <i class="bi bi-arrow-left me-1"></i> Volver al Inicio
+            </a>
+            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill shadow-sm">Módulo Educativo</span>
         </div>
 
-<<<<<<< HEAD
         <h2 class="text-center text-primary fw-bold mb-2">Selecciona una Sesión Educativa</h2>
-        <p class="text-center text-muted mb-3">Recorre las tres sesiones a tu propio ritmo para aprender más sobre la salud mamaria.</p>
+        <p class="text-center text-muted mb-4">Recorre las tres sesiones a tu propio ritmo para aprender más sobre la salud mamaria.</p>
 
-        <!-- Barra de progreso general -->
-        <div class="mx-auto mb-5" style="max-width: 500px;">
-            <div class="d-flex justify-content-between small text-muted mb-1">
-                <span>Tu progreso</span>
-                <span>0 de 3 sesiones completadas</span>
-            </div>
-            <div class="progress" style="height: 8px;">
-                <div class="progress-bar bg-primary" role="progressbar" style="width: 0%;"></div>
+        <!-- Barra de progreso rediseñada y destacada -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-7 col-lg-6">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-trophy-fill text-primary fs-5"></i> Tu progreso general
+                        </span>
+                        <span class="badge bg-primary bg-opacity-10 text-primary fw-bold px-3 py-1 rounded-pill fs-6">
+                            0 de 3 completadas
+                        </span>
+                    </div>
+                    <div class="progress rounded-pill bg-light" style="height: 12px;">
+                        <div class="progress-bar bg-primary rounded-pill progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;"></div>
+                    </div>
+                </div>
             </div>
         </div>
-=======
-        <h2 class="text-center text-primary fw-bold mb-4">Selecciona una Sesión Educativa</h2>
->>>>>>> f7d06a3fa6412609bbe009a9841b700e2a2901b6
 
+        <!-- Tarjetas de Sesiones -->
         <div class="row g-4 justify-content-center">
             <!-- Sesión 1 -->
+            <!-- Sesión 1 -->
             <div class="col-md-4">
-<<<<<<< HEAD
-                <div class="card h-100 shadow-sm border-0 text-center p-3 position-relative">
-                    
-                    <div class="card-body d-flex flex-column">
-                        <i class="bi bi-ribbon fs-1 text-primary mb-2"></i>
-                        <h5 class="fw-bold">Sesión 1</h5>
+                <div class="card h-100 shadow-sm border-0 text-center p-3 rounded-4 position-relative">
+                    <div class="card-body d-flex flex-column align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-3 mb-3 d-flex align-items-center justify-content-center" style="width: 65px; height: 65px;">
+                            <i class="bi bi-book-half fs-2"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">Sesión 1</h5>
                         <p class="text-muted small mb-3">Mitos vs Realidades sobre el Cáncer de Mama.</p>
-                        <ul class="text-start small text-muted mb-3 ps-3">
+                        <ul class="text-start small text-muted mb-3 ps-3 w-100">
                             <li>Desmiente creencias populares erróneas</li>
                             <li>Conoce los verdaderos factores de riesgo</li>
                             <li>Aprende a diferenciar mito de evidencia científica</li>
                         </ul>
-                        <div class="small text-muted mb-3">
-                            <i class="bi bi-clipboard-check"></i> 15 preguntas · Nivel básico
+                        <div class="small text-muted mb-3 mt-auto">
+                            <i class="bi bi-clipboard-check text-primary"></i> 15 preguntas · Nivel básico
                         </div>
-                        <a href="{% url 'educativo_sesion' 'S1' %}" class="btn btn-primary w-100 mt-auto">Iniciar Sesión</a>
-=======
-                <div class="card h-100 shadow-sm border-0 text-center p-3">
-                    <div class="card-body">
-                        <h5 class="fw-bold">Sesión 1</h5>
-                        <p class="text-muted small">Mitos vs Realidades sobre el Cáncer de Mama.</p>
-                        <a href="{% url 'educativo_sesion' 'S1' %}" class="btn btn-primary w-100">Iniciar Sesión</a>
->>>>>>> f7d06a3fa6412609bbe009a9841b700e2a2901b6
+                        <a href="{% url 'educativo_sesion' 'S1' %}" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">Iniciar Sesión</a>
                     </div>
                 </div>
             </div>
 
             <!-- Sesión 2 -->
             <div class="col-md-4">
-<<<<<<< HEAD
-                <div class="card h-100 shadow-sm border-0 text-center p-3 position-relative">
-                    
-                    <div class="card-body d-flex flex-column">
-                        <i class="bi bi-heart-pulse fs-1 text-primary mb-2"></i>
-                        <h5 class="fw-bold">Sesión 2</h5>
+                <div class="card h-100 shadow-sm border-0 text-center p-3 rounded-4 position-relative">
+                    <div class="card-body d-flex flex-column align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-3 mb-3 d-flex align-items-center justify-content-center" style="width: 65px; height: 65px;">
+                            <i class="bi bi-heart-pulse fs-2"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">Sesión 2</h5>
                         <p class="text-muted small mb-3">Preguntas Clave sobre Prevención y Síntomas.</p>
-                        <ul class="text-start small text-muted mb-3 ps-3">
+                        <ul class="text-start small text-muted mb-3 ps-3 w-100">
                             <li>Identifica señales de alerta tempranas</li>
                             <li>Descubre hábitos que ayudan a prevenir</li>
                             <li>Resuelve dudas frecuentes sobre autoexamen</li>
                         </ul>
-                        <div class="small text-muted mb-3">
-                            <i class="bi bi-clipboard-check"></i> 20 preguntas · Nivel intermedio
+                        <div class="small text-muted mb-3 mt-auto">
+                            <i class="bi bi-clipboard-check text-primary"></i> 20 preguntas · Nivel intermedio
                         </div>
-                        <a href="{% url 'educativo_sesion' 'S2' %}" class="btn btn-primary w-100 mt-auto">Iniciar Sesión</a>
-=======
-                <div class="card h-100 shadow-sm border-0 text-center p-3">
-                    <div class="card-body">
-                        <h5 class="fw-bold">Sesión 2</h5>
-                        <p class="text-muted small">Preguntas Clave sobre Prevención y Síntomas.</p>
-                        <a href="{% url 'educativo_sesion' 'S2' %}" class="btn btn-primary w-100">Iniciar Sesión</a>
->>>>>>> f7d06a3fa6412609bbe009a9841b700e2a2901b6
+                        <a href="{% url 'educativo_sesion' 'S2' %}" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">Iniciar Sesión</a>
                     </div>
                 </div>
             </div>
 
             <!-- Sesión 3 -->
             <div class="col-md-4">
-<<<<<<< HEAD
-                <div class="card h-100 shadow-sm border-0 text-center p-3 position-relative">
-                    
-                    <div class="card-body d-flex flex-column">
-                        <i class="bi bi-check-circle fs-1 text-primary mb-2"></i>
-                        <h5 class="fw-bold">Sesión 3</h5>
+                <div class="card h-100 shadow-sm border-0 text-center p-3 rounded-4 position-relative">
+                    <div class="card-body d-flex flex-column align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-3 mb-3 d-flex align-items-center justify-content-center" style="width: 65px; height: 65px;">
+                            <i class="bi bi-check-circle fs-2"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">Sesión 3</h5>
                         <p class="text-muted small mb-3">Verdadero o Falso: Evaluando tus Conocimientos.</p>
-                        <ul class="text-start small text-muted mb-3 ps-3">
+                        <ul class="text-start small text-muted mb-3 ps-3 w-100">
                             <li>Pon a prueba lo aprendido en las sesiones anteriores</li>
                             <li>Recibe retroalimentación inmediata</li>
                             <li>Refuerza los conceptos clave</li>
                         </ul>
-                        <div class="small text-muted mb-3">
-                            <i class="bi bi-clipboard-check"></i> 20 preguntas · Nivel evaluación
+                        <div class="small text-muted mb-3 mt-auto">
+                            <i class="bi bi-clipboard-check text-primary"></i> 20 preguntas · Nivel evaluación
                         </div>
-                        <a href="{% url 'educativo_sesion' 'S3' %}" class="btn btn-primary w-100 mt-auto">Iniciar Sesión</a>
-=======
-                <div class="card h-100 shadow-sm border-0 text-center p-3">
-                    <div class="card-body">
-                        <h5 class="fw-bold">Sesión 3</h5>
-                        <p class="text-muted small">Verdadero o Falso: Evaluando tus Conocimientos.</p>
-                        <a href="{% url 'educativo_sesion' 'S3' %}" class="btn btn-primary w-100">Iniciar Sesión</a>
->>>>>>> f7d06a3fa6412609bbe009a9841b700e2a2901b6
+                        <a href="{% url 'educativo_sesion' 'S3' %}" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">Iniciar Sesión</a>
                     </div>
                 </div>
             </div>
         </div>
-<<<<<<< HEAD
 
-        <!-- Banner de concientización -->
+        <!-- Banner Informativo Rediseñado con Letras Más Grandes -->
         <div class="row justify-content-center mt-5">
-            <div class="col-md-10">
-                <div class="rounded-4 p-4 p-md-5 text-center shadow-sm" style="background: linear-gradient(135deg, #a78bfa, #7c3aed); color: white;">
-                    <i class="bi bi-heart-fill fs-3 mb-2 d-block"></i>
-                    <h4 class="fw-bold mb-2">Sabías que...</h4>
-                    <p class="mb-0">La detección temprana aumenta significativamente las probabilidades de un tratamiento exitoso. Completa las tres sesiones para fortalecer tus conocimientos y compartirlos con quienes más quieres.</p>
+            <div class="col-md-11 col-lg-10">
+                <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+                    <div class="card-body p-4 p-md-5 position-relative">
+                        <!-- Borde decorativo lateral -->
+                        <div class="position-absolute top-0 start-0 h-100 bg-primary" style="width: 8px;"></div>
+                        
+                        <div class="d-flex align-items-start align-items-md-center gap-4 ps-2">
+                            <!-- Ícono de bombilla aumentado -->
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary d-none d-md-flex align-items-center justify-content-center flex-shrink-0" style="width: 70px; height: 70px;">
+                                <i class="bi bi-lightbulb-fill fs-2"></i>
+                            </div>
+                            
+                            <div>
+                                <span class="badge bg-primary bg-opacity-10 text-primary fw-bold px-3 py-2 rounded-pill mb-2 fs-6">
+                                    💡 Dato Clave de Salud
+                                </span>
+                                <h4 class="fw-bold text-dark mb-2 fs-3">¿Sabías que...?</h4>
+                                <p class="text-secondary mb-0 fs-5 lh-base">
+                                    La <strong>detección temprana</strong> aumenta significativamente las probabilidades de un tratamiento exitoso. Completa las tres sesiones para fortalecer tus conocimientos y compartirlos con quienes más quieres.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-=======
->>>>>>> f7d06a3fa6412609bbe009a9841b700e2a2901b6
     </div>
+
     <script src="{% static 'prevencion/js/animaciones.js' %}"></script>
 </body>
 </html>

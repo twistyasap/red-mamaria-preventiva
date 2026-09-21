@@ -1,0 +1,452 @@
+/* ===================================================
+   RED MAMARIA PREVENTIVA — PALETA MORADO PASTEL & OUTFIT
+   =================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Escala pastel de morados / lavanda */
+    --purple-50:  #f6f0fd;
+    --purple-100: #eee2fc;
+    --purple-200: #e0ccfa;
+    --purple-300: #c9a7f5;
+    --purple-400: #ad7cee;
+    --purple-500: #8b5cf6;   /* Morado principal pastel vibrante */
+    --purple-600: #7c3aed;   /* Enfoque / Hover */
+    --purple-700: #5b21b6;   /* Texto oscuro */
+
+    /* Alias de tema */
+    --primary-color: var(--purple-500);
+    --primary-hover: var(--purple-600);
+
+    --bg-light: var(--purple-50);
+    --surface-color: #ffffff;
+    --text-dark: #231934;
+    --text-muted: #74638d;
+    --border-color: #e5d8f8;
+
+    --radius-lg: 22px;
+    --radius-md: 14px;
+
+    --shadow-soft: 0 10px 30px rgba(139, 92, 246, 0.08);
+    --shadow-hover: 0 16px 36px rgba(124, 58, 237, 0.16);
+
+    --transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+    --gradient-brand: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    --gradient-brand-hover: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    --gradient-bg: linear-gradient(135deg, #fbf7ff 0%, #f3e8ff 40%, #e9d5ff 100%);
+}
+
+/* ===================================================
+   FONDO Y TIPOGRAFÍA GENERAL
+   =================================================== */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: var(--gradient-bg) !important;
+    background-attachment: fixed !important;
+    color: var(--text-dark) !important;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    opacity: 0;
+    animation: fadeInPage 0.6s ease forwards;
+}
+
+/* Destellos decorativos suavemente difuminados en el fondo */
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+body::before {
+    width: 450px;
+    height: 450px;
+    background: #ddd6fe;
+    top: -150px;
+    right: -100px;
+    animation: floatBlob 14s ease-in-out infinite;
+}
+
+body::after {
+    width: 500px;
+    height: 500px;
+    background: #c084fc;
+    bottom: -180px;
+    left: -150px;
+    opacity: 0.35;
+    animation: floatBlob 16s ease-in-out infinite reverse;
+}
+
+@keyframes floatBlob {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(35px, -25px) scale(1.08); }
+}
+
+@keyframes fadeInPage {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+body.page-leaving {
+    animation: fadeOutPage 0.28s ease forwards;
+}
+
+@keyframes fadeOutPage {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-8px); }
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-dark);
+    letter-spacing: -0.025em;
+    font-weight: 700;
+}
+
+.text-primary {
+    color: var(--purple-600) !important;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* ===================================================
+   TARJETAS
+   =================================================== */
+.card, .card-session {
+    background: var(--surface-color) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-soft) !important;
+    transition: var(--transition) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before, .card-session::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: var(--gradient-brand);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+}
+
+.card:hover::before, .card-session:hover::before {
+    transform: scaleX(1);
+}
+
+.card:hover, .card-session:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover) !important;
+    border-color: var(--purple-300) !important;
+}
+
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ===================================================
+   BOTONES UNIFICADOS Y PASTEL
+   =================================================== */
+.btn {
+    border-radius: 50px !important;
+    padding: 0.7rem 1.5rem !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    transition: var(--transition) !important;
+    letter-spacing: 0.01em;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+    transform: scale(0);
+    animation: rippleEffect 0.6s ease-out;
+    pointer-events: none;
+}
+
+@keyframes rippleEffect {
+    to {
+        transform: scale(3.2);
+        opacity: 0;
+    }
+}
+
+.btn-primary,
+.btn-medtech,
+.btn-info,
+.btn-success {
+    background: var(--gradient-brand) !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-primary:hover,
+.btn-medtech:hover,
+.btn-info:hover,
+.btn-success:hover {
+    background: var(--gradient-brand-hover) !important;
+    box-shadow: 0 10px 24px rgba(109, 40, 217, 0.35) !important;
+    transform: translateY(-2px);
+    color: #ffffff !important;
+}
+
+.btn-outline-primary {
+    color: var(--purple-600) !important;
+    border: 1.5px solid var(--purple-300) !important;
+    background: #ffffff !important;
+}
+
+.btn-outline-primary:hover {
+    background: var(--gradient-brand) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+    transform: translateY(-2px);
+}
+
+.btn-outline-secondary,
+.btn-outline-custom {
+    color: var(--text-muted) !important;
+    border: 1.5px solid var(--border-color) !important;
+    background-color: var(--surface-color) !important;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-custom:hover {
+    background: var(--purple-50) !important;
+    border-color: var(--purple-300) !important;
+    color: var(--purple-700) !important;
+    transform: translateY(-2px);
+}
+
+.btn-outline-danger {
+    color: #c04862 !important;
+    border: 1.5px solid #f2c2cd !important;
+    background: #ffffff !important;
+}
+.btn-outline-danger:hover {
+    background: #c04862 !important;
+    border-color: #c04862 !important;
+    color: #fff !important;
+    transform: translateY(-2px);
+}
+
+/* Badges */
+.badge {
+    font-weight: 600 !important;
+    padding: 0.5rem 0.9rem !important;
+    border-radius: 50rem !important;
+    transition: var(--transition);
+}
+
+.badge.bg-primary {
+    background: var(--gradient-brand) !important;
+    color: #ffffff !important;
+    border: none;
+}
+
+.badge.bg-secondary {
+    background-color: var(--purple-50) !important;
+    color: var(--purple-700) !important;
+    border: 1px solid var(--purple-200);
+}
+
+/* Formularios */
+.form-control, .input-group-text {
+    border-radius: var(--radius-md) !important;
+    border: 1.5px solid var(--border-color) !important;
+    padding: 0.75rem 1rem !important;
+    background-color: #ffffff !important;
+    font-size: 0.95rem !important;
+    transition: var(--transition) !important;
+}
+
+.form-control:focus {
+    border-color: var(--purple-400) !important;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15) !important;
+}
+
+hr {
+    border-color: var(--purple-200) !important;
+}
+
+/* Alertas */
+.alert {
+    border-radius: var(--radius-md) !important;
+    border: none !important;
+}
+.alert-danger {
+    background-color: #fdf0f3 !important;
+    color: #aa3952 !important;
+}
+.alert-success {
+    background-color: #f0fdf4 !important;
+    color: #24683e !important;
+}
+.alert-warning {
+    background-color: #fffdf0 !important;
+    color: #8c6e26 !important;
+}
+
+/* DROPZONE */
+.dropzone {
+    transition: var(--transition) !important;
+    border-color: var(--purple-200) !important;
+    background-color: #ffffff !important;
+}
+.dropzone:hover, .dropzone.dragover {
+    border-color: var(--purple-400) !important;
+    background-color: var(--purple-50) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--purple-50);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--purple-200);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--purple-300);
+}
+
+/* ===================================================
+   ASISTENTE VIRTUAL (SONIA) — PESTAÑA Y CHAT FLOTANTE
+   =================================================== */
+.chat-widget-btn {
+    position: fixed !important;
+    bottom: 24px !important;
+    right: 24px !important;
+    z-index: 9999 !important;
+    border-radius: 50px !important;
+    padding: 12px 22px !important;
+    background: var(--gradient-brand) !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.35) !important;
+    border: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    transition: var(--transition) !important;
+}
+
+.chat-widget-btn:hover {
+    background: var(--gradient-brand-hover) !important;
+    transform: translateY(-3px) scale(1.02) !important;
+    box-shadow: 0 12px 28px rgba(124, 58, 237, 0.45) !important;
+    color: #ffffff !important;
+}
+
+.chat-widget-box {
+    position: fixed !important;
+    bottom: 85px !important;
+    right: 24px !important;
+    width: 380px !important;
+    max-width: calc(100vw - 48px) !important;
+    height: 500px !important;
+    max-height: calc(100vh - 120px) !important;
+    background: #ffffff !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: 0 16px 40px rgba(88, 28, 135, 0.18) !important;
+    border: 1px solid var(--border-color) !important;
+    z-index: 9998 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(15px) scale(0.95) !important;
+    transition: var(--transition) !important;
+}
+
+.chat-widget-box.is-open {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) scale(1) !important;
+}
+
+.chat-widget-header {
+    background: var(--gradient-brand) !important;
+    color: #ffffff !important;
+    padding: 14px 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.chat-widget-body {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    background: var(--purple-50) !important;
+}
+
+.chat-widget-footer {
+    padding: 12px 16px !important;
+    background: #ffffff !important;
+    border-top: 1px solid var(--border-color) !important;
+}
+
+.msg {
+    max-width: 82% !important;
+    padding: 10px 14px !important;
+    border-radius: 14px !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+}
+
+.msg-sonia {
+    background: #ffffff !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-dark) !important;
+    align-self: flex-start !important;
+    border-bottom-left-radius: 4px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+}
+
+.msg-usuario {
+    background: var(--gradient-brand) !important;
+    color: #ffffff !important;
+    align-self: flex-end !important;
+    border-bottom-right-radius: 4px !important;
+}

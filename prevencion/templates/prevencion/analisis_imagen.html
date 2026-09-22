@@ -5,11 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Análisis de Imagen - Red Mamaria Preventiva con AI</title>
-   <link rel="icon" type="image/png" href="/media/imagenes_mamarias/favicon.png">
+    <link rel="icon" type="image/png" href="/media/imagenes_mamarias/favicon.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}">
+    <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=2.0">
     <style>
         .dropzone {
             border: 2px dashed #e0ccfa;
@@ -37,7 +38,7 @@
     <div class="container" style="max-width: 800px;">
 
         <div class="d-flex align-items-center gap-2 mb-4">
-            <a href="{% url 'inicio' %}" class="btn btn-sm btn-outline-secondary border-0">
+            <a href="{% url 'inicio' %}" class="btn btn-sm btn-outline-secondary border-0 nav-link-custom">
                 <i class="bi bi-arrow-left"></i>
             </a>
             <h4 class="fw-bold mb-0" style="color:#7c3aed;">Análisis de Imagen</h4>
@@ -58,7 +59,7 @@
                 {% csrf_token %}
                 <div class="dropzone mb-3" id="dropzone">
                     <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
-                    <p class="mb-0 mt-2 text-muted">Haz clic o arrastra una imagen aquí (JPG, PNG)</p>
+                    <p class="mb-0 mt-2 text-muted" id="dropzoneText">Haz clic o arrastra una imagen aquí (JPG, PNG)</p>
                     <img id="previewImg" class="mt-3">
                     <input type="file" name="imagen_original" id="imagenInput" accept="image/*" class="d-none" required>
                 </div>
@@ -109,42 +110,50 @@
 
     </div>
 
-    <script>
-        const dropzone = document.getElementById('dropzone');
-        const input = document.getElementById('imagenInput');
-        const preview = document.getElementById('previewImg');
-        const submitBtn = document.getElementById('submitBtn');
+    <!-- Modal Informativo / Pop-up -->
+    <div id="modalOpcional" class="modal-overlay">
+      <div class="modal-card">
+        <!-- Botón de cerrar (✕) -->
+        <button type="button" class="modal-x-btn" onclick="cerrarModal()">&times;</button>
+        
+        <!-- Ilustración Central -->
+        <div class="illustration-container">
+          <div class="bg-circle-lg"></div>
+          <div class="leaves-icon">🍃</div>
+          <div class="mammo-frame">
+            <div class="scan-line"></div>
+          </div>
+          <div class="upload-badge">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7b2cbf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+              <path d="M12 12v9"></path>
+              <path d="m16 16-4-4-4 4"></path>
+            </svg>
+          </div>
+        </div>
 
-        dropzone.addEventListener('click', () => input.click());
+        <!-- Título y Texto -->
+        <h2 class="modal-title">Subir mamografía</h2>
+        <p class="modal-description">
+          Subir una mamografía a esta página es completamente OPCIONAL. Pero si deseas obtener información sobre tus resultados, puedes subir tu examen aquí.
+        </p>
 
-        dropzone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropzone.classList.add('dragover');
-        });
-        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('dragover');
-            if (e.dataTransfer.files.length) {
-                input.files = e.dataTransfer.files;
-                mostrarPreview();
-            }
-        });
+        <!-- Botón Entendido -->
+        <button type="button" class="btn-entendido" onclick="cerrarModal()">
+          Entendido
+        </button>
 
-        input.addEventListener('change', mostrarPreview);
+        <!-- Footer con Candado -->
+        <div class="modal-footer-custom">
+          <svg class="lock-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5c5470" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Tu archivo será tratado con confidencialidad.</span>
+        </div>
+      </div>
+    </div>
 
-        function mostrarPreview() {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                preview.src = e.target.result;
-                preview.style.display = 'inline-block';
-            };
-            reader.readAsDataURL(file);
-            submitBtn.disabled = false;
-        }
-    </script>
-    <script src="{% static 'prevencion/js/animaciones.js' %}"></script>
+    <script src="{% static 'prevencion/js/animaciones.js' %}?v=2.0"></script>
 </body>
 </html>

@@ -188,6 +188,42 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =========================
+    // AVISO DE MENSAJE VACÍO
+    // =========================
+
+    let avisoVacio = null;
+    let temporizadorAviso = null;
+
+    function mostrarAvisoVacio() {
+
+        if (!avisoVacio) {
+            avisoVacio = document.createElement("div");
+            avisoVacio.className = "chat-aviso-vacio";
+            avisoVacio.setAttribute("role", "alert");
+            avisoVacio.textContent =
+                "No has escrito nada a nuestra asistente, " +
+                "escribe algo y te atenderemos.";
+            form.insertAdjacentElement("beforebegin", avisoVacio);
+        }
+
+        avisoVacio.hidden = false;
+        input.focus();
+
+        clearTimeout(temporizadorAviso);
+        temporizadorAviso = setTimeout(ocultarAvisoVacio, 4000);
+    }
+
+    function ocultarAvisoVacio() {
+        if (avisoVacio) {
+            avisoVacio.hidden = true;
+        }
+    }
+
+    if (input) {
+        input.addEventListener("input", ocultarAvisoVacio);
+    }
+
+    // =========================
     // ENVÍO DE MENSAJES
     // =========================
 
@@ -201,8 +237,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // No enviar mensajes vacíos
             if (!texto) {
+                mostrarAvisoVacio();
                 return;
             }
+
+            ocultarAvisoVacio();
 
             // Mostrar mensaje del usuario
             agregarMensaje(texto, "usuario");

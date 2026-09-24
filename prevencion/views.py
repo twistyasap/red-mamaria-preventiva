@@ -26,9 +26,42 @@ def registro_usuario(request):
 
     if request.method == 'POST':
 
-        usuario = request.POST.get('username')
-        correo = request.POST.get('email')
-        clave = request.POST.get('password')
+        usuario = (request.POST.get('username') or '').strip()
+        correo = (request.POST.get('email') or '').strip()
+        clave = request.POST.get('password') or ''
+
+        # Datos para volver a llenar el formulario si hay un error
+        contexto = {
+            'datos': {
+                'username': usuario,
+                'email': correo,
+            }
+        }
+
+        campos_obligatorios = [
+            (usuario, 'Nombre de usuario'),
+            (correo, 'Correo Electrónico'),
+            (clave, 'Contraseña'),
+        ]
+
+        faltantes = [
+            nombre for valor, nombre in campos_obligatorios
+            if not valor
+        ]
+
+        if faltantes:
+
+            for nombre in faltantes:
+                messages.error(
+                    request,
+                    f'Falta llenar el campo {nombre}.'
+                )
+
+            return render(
+                request,
+                'prevencion/registro.html',
+                contexto
+            )
 
         if User.objects.filter(username=usuario).exists():
 
@@ -37,7 +70,11 @@ def registro_usuario(request):
                 'El nombre de usuario ya existe. Intenta con otro.'
             )
 
-            return redirect('registro')
+            return render(
+                request,
+                'prevencion/registro.html',
+                contexto
+            )
 
         nuevo_usuario = User.objects.create_user(
             username=usuario,
@@ -48,6 +85,9 @@ def registro_usuario(request):
         nuevo_usuario.save()
 
         login(request, nuevo_usuario)
+
+        # El Inicio mostrará el pop-up de bienvenida una vez
+        request.session['bienvenida'] = 'registro'
 
         return redirect('inicio')
 
@@ -65,8 +105,30 @@ def iniciar_sesion(request):
 
     if request.method == 'POST':
 
-        usuario = request.POST.get('username')
-        clave = request.POST.get('password')
+        usuario = (request.POST.get('username') or '').strip()
+        clave = request.POST.get('password') or ''
+
+        faltantes = [
+            nombre for valor, nombre in [
+                (usuario, 'Usuario'),
+                (clave, 'Contraseña'),
+            ]
+            if not valor
+        ]
+
+        if faltantes:
+
+            for nombre in faltantes:
+                messages.error(
+                    request,
+                    f'Falta llenar el campo {nombre}.'
+                )
+
+            return render(
+                request,
+                'prevencion/iniciar_sesion.html',
+                {'usuario_ingresado': usuario}
+            )
 
         user = authenticate(
             request,
@@ -77,6 +139,9 @@ def iniciar_sesion(request):
         if user is not None:
 
             login(request, user)
+
+            # El Inicio mostrará el pop-up de bienvenida una vez
+            request.session['bienvenida'] = 'login'
 
             return redirect('inicio')
 
@@ -113,9 +178,16 @@ def cerrar_sesion(request):
 @login_required(login_url='iniciar_sesion')
 def inicio(request):
 
+    # 'registro', 'login' o None. Se saca de la sesión para que el
+    # pop-up aparezca solo la primera vez que se llega al Inicio.
+    bienvenida = request.session.pop('bienvenida', None)
+
     return render(
         request,
-        'prevencion/inicio.html'
+        'prevencion/inicio.html',
+        {
+            'bienvenida': bienvenida,
+        }
     )
 
 
@@ -233,15 +305,8 @@ def analisis_imagen(request):
             'Imagen analizada correctamente.'
         )
 
-    historial = AnalisisEcografia.objects.filter(
-        usuario=request.user
-    ).order_by(
-        '-fecha_analisis'
-    )[:5]
-
     context = {
         'resultado': resultado,
-        'historial': historial,
     }
 
     return render(
@@ -484,7 +549,7 @@ Responde directamente a la pregunta del usuario.
 
     res_data = None
     modelo_utilizado = None
-    ultimo_error = 'No se intentó ningún modelo.'
+    errores = []
 
     for modelo in settings.GEMINI_MODELS:
 
@@ -504,8 +569,8 @@ Responde directamente a la pregunta del usuario.
 
         except requests.exceptions.RequestException as error:
 
-            ultimo_error = f"{modelo}: error de conexión ({error})"
-            print(f"SONIA: {ultimo_error}")
+            errores.append(f"{modelo}: error de conexión ({error})")
+            print(f"SONIA: {errores[-1]}")
             continue
 
         try:
@@ -514,11 +579,11 @@ Responde directamente a la pregunta del usuario.
 
         except ValueError:
 
-            ultimo_error = (
+            errores.append(
                 f"{modelo}: respuesta no JSON "
                 f"(HTTP {response.status_code})"
             )
-            print(f"SONIA: {ultimo_error}")
+            print(f"SONIA: {errores[-1]}")
             continue
 
         if response.status_code == 200:
@@ -529,10 +594,10 @@ Responde directamente a la pregunta del usuario.
 
         mensaje_error = datos.get('error', {}).get('message', '')
 
-        ultimo_error = (
+        errores.append(
             f"{modelo}: HTTP {response.status_code} - {mensaje_error}"
         )
-        print(f"SONIA: {ultimo_error}")
+        print(f"SONIA: {errores[-1]}")
 
         # API key inválida o sin permisos: ningún otro modelo va a
         # funcionar, así que no tiene sentido seguir intentando.
@@ -555,7 +620,7 @@ Responde directamente a la pregunta del usuario.
             'Estoy teniendo dificultades para responder '
             'en este momento. Intenta nuevamente '
             'en unos segundos.',
-            ultimo_error,
+            '\n'.join(errores) or 'No hay modelos configurados.',
             status=503
         )
 

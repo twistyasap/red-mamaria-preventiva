@@ -107,13 +107,108 @@
                 Sonia está escribiendo...
             </div>
             <form id="chatForm" class="d-flex gap-2">
-                <input type="text" id="chatInput" class="form-control form-control-sm" placeholder="Escribe tu mensaje..." autocomplete="off" required>
+                <input type="text" id="chatInput" class="form-control form-control-sm" placeholder="Escribe tu mensaje..." autocomplete="off">
                 <button type="submit" class="btn btn-primary btn-sm px-3">
                     <i class="bi bi-send-fill"></i>
                 </button>
             </form>
         </div>
     </div>
+
+    {% if bienvenida %}
+    <!-- Pop-up de bienvenida (solo después de iniciar sesión o registrarse) -->
+    <div id="modalBienvenida" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tituloBienvenida">
+        <div class="modal-card modal-bienvenida">
+            <button type="button" class="modal-x-btn" data-cerrar-bienvenida aria-label="Cerrar">&times;</button>
+
+            <div class="illustration-container">
+                <div class="bg-circle-lg"></div>
+                <div class="bienvenida-icono">
+                    <i class="bi bi-heart-pulse-fill"></i>
+                </div>
+            </div>
+
+            <h2 class="modal-title" id="tituloBienvenida">
+                {% if bienvenida == 'registro' %}
+                    ¡Te damos la bienvenida, {{ user.username }}!
+                {% else %}
+                    ¡Hola de nuevo, {{ user.username }}!
+                {% endif %}
+            </h2>
+
+            <p class="modal-description">
+                <strong>Red Mamaria Preventiva con AI</strong> es una plataforma educativa
+                para aprender sobre la prevención y la detección temprana del cáncer de mama.
+                Esto es lo que puedes hacer aquí:
+            </p>
+
+            <ul class="bienvenida-lista">
+                <li>
+                    <i class="bi bi-journal-bookmark-fill"></i>
+                    <div>
+                        <strong>Módulo Educativo</strong>
+                        <span>3 sesiones de preguntas para aprender, derribar mitos y reforzar lo aprendido.</span>
+                    </div>
+                </li>
+                <li>
+                    <i class="bi bi-file-earmark-medical-fill"></i>
+                    <div>
+                        <strong>Análisis de Imagen</strong>
+                        <span>Si quieres, sube tu mamografía y recibe una evaluación preliminar con inteligencia artificial, con fines educativos.</span>
+                    </div>
+                </li>
+                <li>
+                    <i class="bi bi-robot"></i>
+                    <div>
+                        <strong>Asistente Sonia</strong>
+                        <span>Resuelve tus dudas sobre salud mamaria en cualquier momento.</span>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="bienvenida-aviso">
+                <i class="bi bi-info-circle-fill"></i>
+                Esta plataforma es educativa y no reemplaza la evaluación de un profesional de salud.
+            </div>
+
+            <button type="button" class="btn-entendido" data-cerrar-bienvenida>
+                Comenzar
+            </button>
+
+            <div class="modal-footer-custom">
+                <i class="bi bi-shield-lock"></i>
+                <span>Tu información es tratada con confidencialidad.</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const modal = document.getElementById("modalBienvenida");
+
+            function cerrarBienvenida() {
+                modal.style.opacity = "0";
+                setTimeout(function () { modal.remove(); }, 200);
+                document.removeEventListener("keydown", cerrarConEscape);
+            }
+
+            function cerrarConEscape(e) {
+                if (e.key === "Escape") cerrarBienvenida();
+            }
+
+            modal.querySelectorAll("[data-cerrar-bienvenida]").forEach(function (boton) {
+                boton.addEventListener("click", cerrarBienvenida);
+            });
+
+            // Cerrar al hacer clic fuera del recuadro blanco
+            modal.addEventListener("click", function (e) {
+                if (e.target === modal) cerrarBienvenida();
+            });
+
+            document.addEventListener("keydown", cerrarConEscape);
+        })();
+    </script>
+    {% endif %}
 
     <script>
         const CHAT_ENDPOINT = "{% url 'asistente_virtual_mensaje' %}";

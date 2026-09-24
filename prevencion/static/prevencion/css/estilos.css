@@ -397,6 +397,192 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 500;
 }
 
+/* ---- Análisis de Imagen: pasos y niveles ---- */
+.paso-analisis {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 18px 14px 14px;
+    background: #f8f5fe;
+    border-radius: 14px;
+}
+
+.paso-analisis > i {
+    font-size: 28px;
+    color: #7c3aed;
+}
+
+.paso-analisis strong {
+    color: #1e1633;
+}
+
+.paso-analisis small {
+    color: #74638d;
+    line-height: 1.4;
+}
+
+.paso-numero {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    background: #7c3aed;
+    border-radius: 50%;
+}
+
+/* Rectángulos de colores que explican cada nivel.
+   Cada nivel define su color principal, uno oscuro para el texto
+   y uno pastel para el fondo. */
+.nivel-tarjeta {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 18px 16px;
+    color: var(--nivel-oscuro);
+    background: var(--nivel-fondo);
+    border: 1px solid var(--nivel-borde);
+    border-top: 5px solid var(--nivel);
+    border-radius: 16px;
+    box-shadow: 0 6px 16px var(--nivel-sombra);
+    transition: transform 0.2s ease;
+}
+
+.nivel-tarjeta:hover {
+    transform: translateY(-3px);
+}
+
+.nivel-tarjeta strong {
+    font-size: 1.2rem;
+    letter-spacing: 0.3px;
+}
+
+.nivel-subtitulo {
+    display: inline-block;
+    margin: 4px 0 10px;
+    padding: 2px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--nivel);
+    border-radius: 50px;
+}
+
+.nivel-tarjeta p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: #3f3a4d;
+}
+
+.nivel-Verde {
+    --nivel: #3b8254;
+    --nivel-oscuro: #2f6e45;
+    --nivel-fondo: #e6f4ea;
+    --nivel-borde: #c3e3cd;
+    --nivel-sombra: rgba(47, 110, 69, 0.14);
+}
+
+.nivel-Amarillo {
+    --nivel: #d97706;
+    --nivel-oscuro: #a4520a;
+    --nivel-fondo: #fdf1dc;
+    --nivel-borde: #f6d9a8;
+    --nivel-sombra: rgba(180, 83, 9, 0.14);
+}
+
+.nivel-Rojo {
+    --nivel: #c04862;
+    --nivel-oscuro: #a3354f;
+    --nivel-fondo: #fbe6eb;
+    --nivel-borde: #f1c3cf;
+    --nivel-sombra: rgba(163, 53, 79, 0.14);
+}
+
+/* ---- Pop-up de bienvenida (Inicio) ---- */
+.modal-bienvenida {
+    max-width: 480px;
+    max-height: 92vh;
+    overflow-y: auto;
+}
+
+.modal-bienvenida .illustration-container {
+    height: 130px;
+    margin-bottom: 10px;
+}
+
+.modal-bienvenida .bg-circle-lg {
+    width: 120px;
+    height: 120px;
+}
+
+.bienvenida-icono {
+    position: relative;
+    z-index: 2;
+    font-size: 52px;
+    color: #7c3aed;
+}
+
+.bienvenida-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+    text-align: left;
+}
+
+.bienvenida-lista li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: #f8f5fe;
+    border-radius: 12px;
+}
+
+.bienvenida-lista li > i {
+    font-size: 20px;
+    color: #7c3aed;
+    line-height: 1.2;
+}
+
+.bienvenida-lista strong {
+    display: block;
+    color: #1e1633;
+    font-size: 15px;
+}
+
+.bienvenida-lista span {
+    color: #4a4458;
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+
+.bienvenida-aviso {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 13px;
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+}
+
 /* ===================================================
    ASISTENTE SONIA — WIDGET FLOTANTE
    =================================================== */
@@ -554,6 +740,26 @@ h1, h2, h3, h4, h5, h6 {
     border-bottom-left-radius: 6px;
 
     box-shadow: 0 3px 10px rgba(60, 30, 90, 0.04);
+}
+
+/* Mensaje de error debajo de un campo vacío (login / registro) */
+.campo-error {
+    margin-top: 6px;
+    font-size: 0.85rem;
+    color: #c0392b;
+}
+
+/* Aviso del chat cuando se intenta enviar un mensaje vacío */
+.chat-aviso-vacio {
+    margin-bottom: 6px;
+    padding: 6px 10px;
+
+    font-size: 0.85rem;
+    color: #9a3412;
+
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
 }
 
 /* Párrafos y listas dentro de las respuestas de Sonia */

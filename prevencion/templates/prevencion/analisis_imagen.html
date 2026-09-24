@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}">
-    <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=2.0">
     <style>
         .dropzone {
             border: 2px dashed #e0ccfa;
@@ -52,6 +51,37 @@
             {% endfor %}
         {% endif %}
 
+        <!-- 1. ¿Cómo funciona? -->
+        <div class="card-session p-4 mb-4">
+            <h6 class="fw-bold mb-3">¿Cómo funciona?</h6>
+            <div class="row g-3 text-center">
+                <div class="col-md-4">
+                    <div class="paso-analisis">
+                        <span class="paso-numero">1</span>
+                        <i class="bi bi-cloud-arrow-up-fill"></i>
+                        <strong>Sube tu imagen</strong>
+                        <small>Elige tu mamografía o ecografía en formato JPG o PNG.</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="paso-analisis">
+                        <span class="paso-numero">2</span>
+                        <i class="bi bi-cpu-fill"></i>
+                        <strong>La IA la analiza</strong>
+                        <small>Un modelo de inteligencia artificial revisa la imagen.</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="paso-analisis">
+                        <span class="paso-numero">3</span>
+                        <i class="bi bi-clipboard2-pulse-fill"></i>
+                        <strong>Recibe tu resultado</strong>
+                        <small>Obtienes un nivel orientativo con fines educativos.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card-session p-4 mb-4">
             <p class="text-muted mb-3">Sube tu ecografía o mamografía para una evaluación preliminar.</p>
 
@@ -90,23 +120,45 @@
         </div>
         {% endif %}
 
-        {% if historial %}
-        <div class="card-session p-4">
-            <h6 class="fw-bold mb-3">Historial reciente</h6>
-            <div class="list-group list-group-flush">
-                {% for item in historial %}
-                <div class="list-group-item d-flex align-items-center gap-3 px-0">
-                    <img src="{{ item.imagen_original.url }}" style="width:48px; height:48px; object-fit:cover; border-radius:6px;">
-                    <div class="flex-grow-1">
-                        <span class="badge badge-riesgo-{{ item.rango_alerta }}">{{ item.rango_alerta }}</span>
-                        <span class="ms-1">{{ item.porcentaje_riesgo }}%</span>
+        <!-- 2. ¿Qué significa cada nivel? -->
+        <div class="card-session p-4 mb-4">
+            <h6 class="fw-bold mb-3">¿Qué significa cada nivel?</h6>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="nivel-tarjeta nivel-Verde">
+                        <strong>Verde</strong>
+                        <span class="nivel-subtitulo">Sin hallazgos llamativos</span>
+                        <p>La imagen no muestra señales de alerta. Mantén tus controles preventivos habituales.</p>
                     </div>
-                    <div class="text-muted small">{{ item.fecha_analisis|date:"d/m/Y H:i" }}</div>
                 </div>
-                {% endfor %}
+                <div class="col-md-4">
+                    <div class="nivel-tarjeta nivel-Amarillo">
+                        <strong>Amarillo</strong>
+                        <span class="nivel-subtitulo">Requiere atención</span>
+                        <p>Hay algo que conviene revisar. Coméntalo con tu médico o matrona en tu próximo control.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="nivel-tarjeta nivel-Rojo">
+                        <strong>Rojo</strong>
+                        <span class="nivel-subtitulo">Consulta pronto</span>
+                        <p>Se detectaron señales que deben evaluarse. Pide una hora con un profesional de salud.</p>
+                    </div>
+                </div>
+            </div>
+            <p class="text-muted small mt-3 mb-0">
+                <i class="bi bi-info-circle me-1"></i>
+                Ningún nivel es un diagnóstico: solo un profesional de salud puede confirmar o descartar una enfermedad.
+            </p>
+
+            <!-- Acceso a la asistente Sonia -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3 pt-3 border-top">
+                <span class="text-muted small">¿Tienes dudas sobre la mamografía o tu resultado?</span>
+                <a href="{% url 'asistente_virtual' %}" class="btn btn-medtech btn-sm px-3">
+                    <i class="bi bi-robot me-1"></i> Pregúntale a Sonia
+                </a>
             </div>
         </div>
-        {% endif %}
 
     </div>
 
@@ -154,6 +206,6 @@
       </div>
     </div>
 
-    <script src="{% static 'prevencion/js/animaciones.js' %}?v=2.0"></script>
+    <script src="{% static 'prevencion/js/animaciones.js' %}"></script>
 </body>
 </html>

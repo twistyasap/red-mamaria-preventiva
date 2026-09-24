@@ -1,9 +1,8 @@
 import json
 import random
 import requests
-import os
 
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -15,8 +14,6 @@ from django.conf import settings
 
 from .models import (
     PreguntaEducativa,
-    OpcionRespuesta,
-    RespuestaUsuario,
     AnalisisEcografia,
 )
 
@@ -148,62 +145,13 @@ def educativo_sesion(request, tipo_sesion):
         'S3': 'Sesión 3: Verdadero o Falso',
     }
 
-    # Guardar respuesta del usuario
-    if request.method == 'POST':
-
-        pregunta_id = request.POST.get('pregunta_id')
-        opcion_id = request.POST.get('opcion_id')
-
-        if pregunta_id and opcion_id:
-
-            pregunta = get_object_or_404(
-                PreguntaEducativa,
-                id=pregunta_id
-            )
-
-            opcion = get_object_or_404(
-                OpcionRespuesta,
-                id=opcion_id
-            )
-
-            RespuestaUsuario.objects.update_or_create(
-                usuario=request.user,
-                pregunta=pregunta,
-                defaults={
-                    'opcion_seleccionada': opcion,
-                    'es_correcta': opcion.es_correcta
-                }
-            )
-
-            return redirect(
-                'educativo_sesion',
-                tipo_sesion=tipo_sesion
-            )
-
+    # Las respuestas se corrigen y se recuerdan en el navegador
+    # (ver el script de sesion_educativa.html).
     preguntas = PreguntaEducativa.objects.filter(
         sesion=tipo_sesion
     ).prefetch_related(
         'opciones'
     )
-
-    respuestas_usuario = RespuestaUsuario.objects.filter(
-        usuario=request.user,
-        pregunta__sesion=tipo_sesion
-    ).select_related(
-        'opcion_seleccionada'
-    )
-
-    respuestas_dict = {
-        respuesta.pregunta_id:
-        respuesta.opcion_seleccionada_id
-        for respuesta in respuestas_usuario
-    }
-
-    for pregunta in preguntas:
-
-        pregunta.opcion_respondida_id = respuestas_dict.get(
-            pregunta.id
-        )
 
     nombre = nombres_sesion.get(
         tipo_sesion,
@@ -320,6 +268,23 @@ def asistente_virtual(request):
 # CHATBOT SONIA - GEMINI
 # ============================================================
 
+def respuesta_error_sonia(mensaje, detalle, status):
+    """
+    Respuesta de error del chat. Con DEBUG activo agrega el detalle
+    técnico para poder ver en el chat qué falló realmente.
+    """
+
+    if settings.DEBUG:
+        mensaje = f"{mensaje}\n\n[DEBUG] {detalle}"
+
+    return JsonResponse(
+        {
+            'respuesta': mensaje
+        },
+        status=status
+    )
+
+
 @login_required(login_url='iniciar_sesion')
 @require_POST
 def asistente_virtual_mensaje(request):
@@ -359,63 +324,11 @@ def asistente_virtual_mensaje(request):
     # 2. OBTENER API KEY
     # ========================================================
 
-    # Primero intenta obtenerla desde settings.py.
-    # Como respaldo, intenta directamente desde Windows / entorno.
-    api_key_settings = getattr(
-        settings,
-        'GEMINI_API_KEY',
-        None
-    )
-
-    api_key_entorno = os.getenv(
-        'GEMINI_API_KEY'
-    )
-
+    # Se lee desde settings.py, que a su vez la toma del archivo .env
+    # (en tu PC) o de las Environment Variables (en Vercel).
     api_key = (
-        api_key_settings
-        or api_key_entorno
-    )
-
-
-    # ========================================================
-    # DEBUG TEMPORAL
-    # ========================================================
-
-    print("")
-    print("========== DEBUG SONIA ==========")
-
-    print(
-        "settings.GEMINI_API_KEY:",
-        bool(api_key_settings)
-    )
-
-    print(
-        "Largo settings:",
-        len(api_key_settings or "")
-    )
-
-    print(
-        "os.getenv GEMINI_API_KEY:",
-        bool(api_key_entorno)
-    )
-
-    print(
-        "Largo getenv:",
-        len(api_key_entorno or "")
-    )
-
-    print(
-        "API final disponible:",
-        bool(api_key)
-    )
-
-    print(
-        "Largo API final:",
-        len(api_key or "")
-    )
-
-    print("=================================")
-    print("")
+        getattr(settings, 'GEMINI_API_KEY', None) or ''
+    ).strip()
 
 
     # ========================================================
@@ -425,15 +338,14 @@ def asistente_virtual_mensaje(request):
     if not api_key:
 
         print(
-            "SONIA ERROR: No se encontró GEMINI_API_KEY."
+            "SONIA ERROR: No se encontró GEMINI_API_KEY. "
+            "Agrégala al archivo .env o a las variables de Vercel."
         )
 
-        return JsonResponse(
-            {
-                'respuesta':
-                'La inteligencia artificial no está disponible '
-                'en este momento.'
-            },
+        return respuesta_error_sonia(
+            'La inteligencia artificial no está disponible '
+            'en este momento.',
+            'Falta GEMINI_API_KEY en el archivo .env.',
             status=500
         )
 
@@ -547,8 +459,11 @@ Responde directamente a la pregunta del usuario.
             }
         ],
 
+        # Los modelos Gemini recientes "piensan" antes de responder y esos
+        # tokens cuentan dentro de este límite. Con un valor bajo la
+        # respuesta puede llegar vacía, por eso se deja holgado.
         "generationConfig": {
-            "maxOutputTokens": 700
+            "maxOutputTokens": 4096
         }
     }
 
@@ -564,33 +479,18 @@ Responde directamente a la pregunta del usuario.
 
 
     # ========================================================
-    # 7. MODELOS
+    # 7. INTENTAR CONSULTAR GEMINI (modelo por modelo)
     # ========================================================
 
-    modelos = [
-        "gemini-3.8-flash",
-        "gemini-3.7-flash",
-    ]
-
-
-    response = None
     res_data = None
     modelo_utilizado = None
+    ultimo_error = 'No se intentó ningún modelo.'
 
-
-    # ========================================================
-    # 8. INTENTAR CONSULTAR GEMINI
-    # ========================================================
-
-    for modelo in modelos:
+    for modelo in settings.GEMINI_MODELS:
 
         url = (
             "https://generativelanguage.googleapis.com/"
             f"v1beta/models/{modelo}:generateContent"
-        )
-
-        print(
-            f"SONIA: intentando responder con {modelo}"
         )
 
         try:
@@ -602,294 +502,109 @@ Responde directamente a la pregunta del usuario.
                 timeout=30
             )
 
-        except requests.exceptions.Timeout:
-
-            print(
-                f"SONIA: timeout con {modelo}"
-            )
-
-            continue
-
         except requests.exceptions.RequestException as error:
 
-            print(
-                f"SONIA: error de conexión con {modelo}:",
-                error
-            )
-
+            ultimo_error = f"{modelo}: error de conexión ({error})"
+            print(f"SONIA: {ultimo_error}")
             continue
-
-
-        # ====================================================
-        # Convertir la respuesta a JSON
-        # ====================================================
 
         try:
 
-            res_data = response.json()
+            datos = response.json()
 
         except ValueError:
 
-            print(
-                f"SONIA: {modelo} devolvió respuesta no JSON."
+            ultimo_error = (
+                f"{modelo}: respuesta no JSON "
+                f"(HTTP {response.status_code})"
             )
-
-            print(
-                response.text
-            )
-
+            print(f"SONIA: {ultimo_error}")
             continue
-
-
-        # ====================================================
-        # RESPUESTA CORRECTA
-        # ====================================================
 
         if response.status_code == 200:
 
+            res_data = datos
             modelo_utilizado = modelo
-
-            print(
-                f"SONIA: respuesta correcta con {modelo}"
-            )
-
             break
 
+        mensaje_error = datos.get('error', {}).get('message', '')
 
-        # ====================================================
-        # ERROR DE GEMINI
-        # ====================================================
-
-        mensaje_error = (
-            res_data
-            .get('error', {})
-            .get('message', '')
+        ultimo_error = (
+            f"{modelo}: HTTP {response.status_code} - {mensaje_error}"
         )
+        print(f"SONIA: {ultimo_error}")
 
-        mensaje_error_minuscula = (
-            mensaje_error.lower()
-        )
+        # API key inválida o sin permisos: ningún otro modelo va a
+        # funcionar, así que no tiene sentido seguir intentando.
+        if response.status_code in [401, 403] or (
+            'api key' in mensaje_error.lower()
+        ):
+            break
 
-
-        print(
-            f"SONIA: error con {modelo}"
-        )
-
-        print(
-            "Código:",
-            response.status_code
-        )
-
-        print(
-            "Mensaje:",
-            mensaje_error
-        )
-
-
-        # ====================================================
-        # ERRORES TEMPORALES
-        # ====================================================
-
-        error_temporal = (
-
-            response.status_code in [
-                429,
-                500,
-                502,
-                503,
-                504
-            ]
-
-            or
-
-            "high demand"
-            in mensaje_error_minuscula
-
-            or
-
-            "overloaded"
-            in mensaje_error_minuscula
-
-            or
-
-            "temporarily unavailable"
-            in mensaje_error_minuscula
-
-            or
-
-            "try again later"
-            in mensaje_error_minuscula
-        )
-
-
-        if error_temporal:
-
-            print(
-                f"SONIA: {modelo} no está disponible temporalmente."
-            )
-
-            continue
-
-
-        # Si es otro error, detenemos los intentos
-        break
+        # Cualquier otro error (modelo inexistente, saturado, límite de
+        # uso, etc.) se intenta con el siguiente modelo.
 
 
     # ========================================================
-    # 9. NINGÚN MODELO RESPONDIÓ
+    # 8. NINGÚN MODELO RESPONDIÓ
     # ========================================================
 
-    if (
-        response is None
-        or response.status_code != 200
-        or res_data is None
-    ):
+    if res_data is None:
 
-        print(
-            "SONIA: ninguno de los modelos pudo responder."
-        )
-
-        if res_data:
-
-            print(
-                "Última respuesta Gemini:",
-                res_data
-            )
-
-        return JsonResponse(
-            {
-                'respuesta':
-                'Estoy teniendo dificultades para responder '
-                'en este momento. Intenta nuevamente '
-                'en unos segundos.'
-            },
+        return respuesta_error_sonia(
+            'Estoy teniendo dificultades para responder '
+            'en este momento. Intenta nuevamente '
+            'en unos segundos.',
+            ultimo_error,
             status=503
         )
 
 
     # ========================================================
-    # 10. EXTRAER RESPUESTA
+    # 9. EXTRAER RESPUESTA
     # ========================================================
 
-    try:
+    candidates = res_data.get('candidates') or []
 
-        candidates = res_data.get(
-            'candidates',
-            []
+    if not candidates:
+
+        # Suele pasar cuando Gemini bloquea el mensaje por seguridad.
+        bloqueo = res_data.get('promptFeedback', {}).get('blockReason')
+
+        return respuesta_error_sonia(
+            'No pude generar una respuesta para ese mensaje. '
+            'Intenta formularlo de otra manera.',
+            f"{modelo_utilizado}: sin candidatos "
+            f"(blockReason={bloqueo})",
+            status=200
         )
 
-        if not candidates:
+    candidato = candidates[0]
 
-            print(
-                "SONIA: Gemini no devolvió candidatos."
-            )
+    textos = [
+        part.get('text', '')
+        for part in candidato.get('content', {}).get('parts', [])
+        # Las partes marcadas como "thought" son el razonamiento
+        # interno del modelo, no la respuesta final.
+        if not part.get('thought')
+    ]
 
-            print(
-                res_data
-            )
+    texto_respuesta = '\n'.join(textos).strip()
 
-            return JsonResponse(
-                {
-                    'respuesta':
-                    'No pude generar una respuesta en este momento.'
-                }
-            )
+    if not texto_respuesta:
 
-
-        content = candidates[0].get(
-            'content',
-            {}
+        return respuesta_error_sonia(
+            'No pude generar una respuesta en este momento. '
+            'Intenta nuevamente.',
+            f"{modelo_utilizado}: respuesta vacía "
+            f"(finishReason={candidato.get('finishReason')})",
+            status=200
         )
 
+    print(f"SONIA: respuesta enviada con {modelo_utilizado}")
 
-        parts = content.get(
-            'parts',
-            []
-        )
-
-
-        if not parts:
-
-            print(
-                "SONIA: Gemini no devolvió partes de texto."
-            )
-
-            print(
-                res_data
-            )
-
-            return JsonResponse(
-                {
-                    'respuesta':
-                    'No pude generar una respuesta en este momento.'
-                }
-            )
-
-
-        # Puede existir más de una parte.
-        textos = []
-
-        for part in parts:
-
-            texto = part.get(
-                'text'
-            )
-
-            if texto:
-
-                textos.append(
-                    texto
-                )
-
-
-        texto_respuesta = (
-            '\n'.join(textos).strip()
-        )
-
-
-        if not texto_respuesta:
-
-            return JsonResponse(
-                {
-                    'respuesta':
-                    'No pude generar una respuesta en este momento.'
-                }
-            )
-
-
-        print(
-            f"SONIA: respuesta enviada con {modelo_utilizado}"
-        )
-
-
-        return JsonResponse(
-            {
-                'respuesta': texto_respuesta
-            }
-        )
-
-
-    # ========================================================
-    # 11. ERROR INESPERADO
-    # ========================================================
-
-    except Exception as error:
-
-        print(
-            "SONIA: error procesando la respuesta:",
-            error
-        )
-
-        print(
-            "Respuesta completa:",
-            res_data
-        )
-
-        return JsonResponse(
-            {
-                'respuesta':
-                'Ocurrió un error al procesar la respuesta. '
-                'Intenta nuevamente.'
-            },
-            status=500
-        )
+    return JsonResponse(
+        {
+            'respuesta': texto_respuesta
+        }
+    )

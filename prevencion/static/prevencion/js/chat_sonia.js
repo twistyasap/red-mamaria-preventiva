@@ -35,6 +35,85 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =========================
+    // FORMATO DE RESPUESTAS
+    // (Markdown básico de Gemini)
+    // =========================
+
+    // Se escapa todo el HTML primero, así el texto de la IA
+    // nunca puede inyectar etiquetas en la página.
+    function escaparHTML(texto) {
+        return texto
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    // **negrita** y *cursiva* dentro de una línea
+    function formatoEnLinea(texto) {
+        return texto
+            .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+            .replace(/(^|[^*\w])\*(?!\s)([^*]+?)\*(?!\*)/g, "$1<em>$2</em>");
+    }
+
+    // Convierte el texto en párrafos y listas (con viñetas o numeradas)
+    function formatearMarkdown(texto) {
+
+        const lineas = escaparHTML(texto).split(/\r?\n/);
+        const html = [];
+        let listaAbierta = null; // "ul", "ol" o null
+
+        function cerrarLista() {
+            if (listaAbierta) {
+                html.push("</" + listaAbierta + ">");
+                listaAbierta = null;
+            }
+        }
+
+        lineas.forEach(function (linea) {
+
+            const limpia = linea.trim();
+            const vineta = limpia.match(/^[*\-•]\s+(.*)$/);
+            const numero = limpia.match(/^\d+[.)]\s+(.*)$/);
+            const titulo = limpia.match(/^#{1,6}\s+(.*)$/);
+
+            if (vineta || numero) {
+
+                const tipoLista = vineta ? "ul" : "ol";
+
+                if (listaAbierta !== tipoLista) {
+                    cerrarLista();
+                    html.push("<" + tipoLista + ">");
+                    listaAbierta = tipoLista;
+                }
+
+                html.push(
+                    "<li>" + formatoEnLinea((vineta || numero)[1]) + "</li>"
+                );
+                return;
+            }
+
+            cerrarLista();
+
+            if (!limpia) {
+                return;
+            }
+
+            if (titulo) {
+                html.push("<p><strong>" + formatoEnLinea(titulo[1]) + "</strong></p>");
+                return;
+            }
+
+            html.push("<p>" + formatoEnLinea(limpia) + "</p>");
+        });
+
+        cerrarLista();
+
+        return html.join("");
+    }
+
+    // =========================
     // AGREGAR MENSAJES AL CHAT
     // =========================
 
@@ -50,7 +129,13 @@ document.addEventListener("DOMContentLoaded", function () {
             "msg " +
             (tipo === "usuario" ? "msg-usuario" : "msg-sonia");
 
-        div.textContent = texto;
+        // Solo las respuestas de Sonia llevan formato;
+        // lo que escribe el usuario se muestra tal cual.
+        if (tipo === "usuario") {
+            div.textContent = texto;
+        } else {
+            div.innerHTML = formatearMarkdown(texto);
+        }
 
         messages.appendChild(div);
 

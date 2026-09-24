@@ -73,22 +73,3 @@ class AnalisisEcografia(models.Model):
 
     def __str__(self):
         return f"Paciente: {self.usuario.username} - Riesgo: {self.porcentaje_riesgo}%"
-
-
-
-
-#HOLA
-from django.conf import settings
-
-class RespuestaUsuario(models.Model):
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='respuestas_educativas')
-    pregunta = models.ForeignKey(PreguntaEducativa, on_delete=models.CASCADE, related_name='respuestas_usuarios')
-    opcion_seleccionada = models.ForeignKey(OpcionRespuesta, on_delete=models.CASCADE)
-    es_correcta = models.BooleanField(default=False)
-    fecha_respuesta = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('usuario', 'pregunta')  # Evita que un usuario responda 2 veces la misma pregunta
-
-    def __str__(self):
-        return f"{self.usuario.username} - Pregunta {self.pregunta.id}"

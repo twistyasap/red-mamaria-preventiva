@@ -12,9 +12,14 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 import dj_database_url
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Carga variables desde el archivo .env (solo en tu PC; en Vercel se usan
+# las Environment Variables del panel).
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -82,7 +87,7 @@ DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
-        ssl_require=bool(os.environ.get('DATABASE_URL')),
+        ssl_require=os.environ.get('DATABASE_URL', '').startswith('postgres'),
     )
 }
 
@@ -143,3 +148,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# Modelos a probar en orden, separados por coma. Si el primero no existe o
+# está saturado, se intenta con el siguiente.
+GEMINI_MODELS = [
+    modelo.strip()
+    for modelo in os.getenv(
+        "GEMINI_MODELS",
+        "gemini-3.5-flash,gemini-2.5-flash"
+    ).split(",")
+    if modelo.strip()
+]

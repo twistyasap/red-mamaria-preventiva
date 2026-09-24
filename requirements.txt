@@ -11,3 +11,4 @@ urllib3==2.7.0
 whitenoise==6.9.0
 dj-database-url
 psycopg2-binary
+python-dotenv==1.2.3

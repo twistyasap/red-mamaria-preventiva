@@ -1,0 +1,543 @@
+[
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 1,
+  "fields": {
+    "sesion": "S1",
+    "enunciado": "¿Un golpe fuerte en el seno puede causar cáncer de mama?",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Mito: Los golpes pueden causar dolor, inflamación o hematomas, pero no provocan cáncer de mama.",
+    "fecha_creacion": "2026-09-11T16:31:57.082Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 2,
+  "fields": {
+    "sesion": "S1",
+    "enunciado": "¿El cáncer de mama puede afectar también a los hombres?",
+    "respuesta_correcta": true,
+    "explicacion_medica": "Realidad : Aunque es mucho menos frecuente, los hombres también pueden desarrollar cáncer de mama.",
+    "fecha_creacion": "2026-09-11T16:35:21.696Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 3,
+  "fields": {
+    "sesion": "S1",
+    "enunciado": "¿Encontrar un bulto en el seno significa siempre que es cáncer?",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Mito: Muchos bultos son benignos, pero cualquier cambio nuevo debe ser evaluado por un profesional de salud.",
+    "fecha_creacion": "2026-09-11T16:35:56.777Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 4,
+  "fields": {
+    "sesion": "S1",
+    "enunciado": "¿Tener antecedentes familiares de cáncer de mama puede aumentar el riesgo de desarrollarlo?",
+    "respuesta_correcta": true,
+    "explicacion_medica": "Realidad. Tener familiares cercanos con cáncer de mama puede aumentar el riesgo, aunque muchas personas diagnosticadas no tienen antecedentes familiares.",
+    "fecha_creacion": "2026-09-11T20:02:27.659Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 5,
+  "fields": {
+    "sesion": "S1",
+    "enunciado": "¿El cáncer de mama siempre produce dolor en sus primeras etapas?",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Mito. En muchos casos puede desarrollarse sin dolor, por lo que es importante estar atento a cambios en las mamas y realizar los controles recomendados.",
+    "fecha_creacion": "2026-09-11T20:02:45.581Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 6,
+  "fields": {
+    "sesion": "S1",
+    "enunciado": "¿Mantener controles médicos periódicos puede ayudar a detectar el cáncer de mama de manera temprana?",
+    "respuesta_correcta": true,
+    "explicacion_medica": "Realidad. Los controles y exámenes recomendados según la edad y el nivel de riesgo pueden ayudar a detectar cambios en etapas más tempranas.",
+    "fecha_creacion": "2026-09-11T20:03:12.517Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 8,
+  "fields": {
+    "sesion": "S1",
+    "enunciado": "¿Si no tengo antecedentes familiares de cáncer de mama, significa que no puedo desarrollarlo?",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Mito. El cáncer de mama también puede aparecer en personas sin antecedentes familiares. Tener familiares con la enfermedad puede aumentar el riesgo, pero no es un requisito para desarrollarla.",
+    "fecha_creacion": "2026-09-11T20:13:54.729Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 9,
+  "fields": {
+    "sesion": "S2",
+    "enunciado": "¿Cuál de los siguientes puede ser un signo de alerta de cáncer de mama?",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Puede ser uno de los signos de alerta más frecuentes.",
+    "fecha_creacion": "2026-09-17T19:42:41.116Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 10,
+  "fields": {
+    "sesion": "S2",
+    "enunciado": "¿Cuál de estos factores puede aumentar el riesgo de desarrollar cáncer de mama?",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Algunos antecedentes familiares pueden aumentar el riesgo de desarrollarlo.",
+    "fecha_creacion": "2026-09-17T19:53:59.859Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 11,
+  "fields": {
+    "sesion": "S2",
+    "enunciado": "¿Para qué sirve principalmente la mamografía?",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Para detectar cambios o lesiones en las mamas\r\nExplicación: La mamografía permite identificar alteraciones que pueden no sentirse al tacto.",
+    "fecha_creacion": "2026-09-17T19:56:56.424Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 12,
+  "fields": {
+    "sesion": "S2",
+    "enunciado": "¿Qué se recomienda hacer si una persona detecta un cambio extraño en una mama?",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Respuesta correcta: A\r\nExplicación: Un profesional puede evaluar el cambio y decidir si se necesitan estudios.",
+    "fecha_creacion": "2026-09-17T19:58:07.096Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 13,
+  "fields": {
+    "sesion": "S2",
+    "enunciado": "¿Cuál de las siguientes situaciones puede justificar una consulta médica?",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Explicación: Una secreción nueva puede ser un cambio que necesite evaluación.",
+    "fecha_creacion": "2026-09-17T20:02:22.521Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 14,
+  "fields": {
+    "sesion": "S2",
+    "enunciado": "¿Por qué es importante detectar el cáncer de mama en etapas tempranas?",
+    "respuesta_correcta": true,
+    "explicacion_medica": "Explicación: La detección temprana suele permitir más opciones de tratamiento.",
+    "fecha_creacion": "2026-09-17T20:03:04.328Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 15,
+  "fields": {
+    "sesion": "S2",
+    "enunciado": "¿Cuál de estas afirmaciones sobre los bultos en la mama es correcta?",
+    "respuesta_correcta": true,
+    "explicacion_medica": "Explicación: No todos son malignos, pero un bulto nuevo debe ser evaluado.",
+    "fecha_creacion": "2026-09-17T20:03:51.588Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 16,
+  "fields": {
+    "sesion": "S2",
+    "enunciado": "¿Cuál de los siguientes cambios en la piel de la mama puede ser una señal de alerta?",
+    "respuesta_correcta": true,
+    "explicacion_medica": "Explicación: Algunos cambios persistentes en la piel pueden requerir evaluación médica.",
+    "fecha_creacion": "2026-09-17T20:04:30.704Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 17,
+  "fields": {
+    "sesion": "S3",
+    "enunciado": "Un bulto en la mama siempre significa que existe cáncer.",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Falso. Muchos bultos pueden ser benignos, pero deben evaluarse.",
+    "fecha_creacion": "2026-09-17T20:07:01.597Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 18,
+  "fields": {
+    "sesion": "S3",
+    "enunciado": "El cáncer de mama también puede afectar a los hombres.",
+    "respuesta_correcta": true,
+    "explicacion_medica": "Verdadero. Es menos frecuente, pero también puede presentarse en hombres.",
+    "fecha_creacion": "2026-09-17T20:07:36.183Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 19,
+  "fields": {
+    "sesion": "S3",
+    "enunciado": "La mamografía puede detectar alteraciones que aún no se sienten al tacto.",
+    "respuesta_correcta": true,
+    "explicacion_medica": "Verdadero. Puede identificar cambios pequeños antes de que sean palpables.",
+    "fecha_creacion": "2026-09-17T20:08:02.062Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 20,
+  "fields": {
+    "sesion": "S3",
+    "enunciado": "Si no tengo antecedentes familiares, no puedo desarrollar cáncer de mama.",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Falso. También puede aparecer en personas sin antecedentes familiares.",
+    "fecha_creacion": "2026-09-17T20:08:18.262Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 21,
+  "fields": {
+    "sesion": "S3",
+    "enunciado": "La aparición de hundimientos o aspecto de piel de naranja puede ser una señal de alerta.",
+    "respuesta_correcta": true,
+    "explicacion_medica": "Verdadero. Algunos cambios visibles en la piel deben ser evaluados.",
+    "fecha_creacion": "2026-09-17T20:08:31.263Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 22,
+  "fields": {
+    "sesion": "S3",
+    "enunciado": "El autoexamen reemplaza completamente la mamografía y los controles médicos.",
+    "respuesta_correcta": false,
+    "explicacion_medica": "Falso. Puede ayudar a conocer cambios, pero no reemplaza los controles.",
+    "fecha_creacion": "2026-09-17T20:08:50.300Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 23,
+  "fields": {
+    "sesion": "S3",
+    "enunciado": "Mantener actividad física regular puede ayudar a disminuir el riesgo de cáncer de mama.",
+    "respuesta_correcta": true,
+    "explicacion_medica": "Verdadero. Un estilo de vida saludable puede contribuir a reducir algunos factores de riesgo.",
+    "fecha_creacion": "2026-09-17T20:09:06.020Z"
+  }
+},
+{
+  "model": "prevencion.preguntaeducativa",
+  "pk": 24,
+  "fields": {
+    "sesion": "S3",
+    "enunciado": "Si aparece una secreción nueva o inusual por el pezón, es recomendable consultar a un profesional.",
+    "respuesta_correcta": true,
+    "explicacion_medica": "Verdadero. Ese cambio puede necesitar evaluación médica.",
+    "fecha_creacion": "2026-09-17T20:09:25.143Z"
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 1,
+  "fields": {
+    "pregunta": 9,
+    "texto_opcion": "A) Aparición de un bulto en la mama o axila",
+    "es_correcta": true
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 2,
+  "fields": {
+    "pregunta": 9,
+    "texto_opcion": "B) Dolor de cabeza",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 3,
+  "fields": {
+    "pregunta": 9,
+    "texto_opcion": "C) Tos ocasional",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 4,
+  "fields": {
+    "pregunta": 9,
+    "texto_opcion": "D) Dolor de rodilla",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 5,
+  "fields": {
+    "pregunta": 10,
+    "texto_opcion": "A) Tener antecedentes familiares de cáncer de mama",
+    "es_correcta": true
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 6,
+  "fields": {
+    "pregunta": 10,
+    "texto_opcion": "B) Usar lentes",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 7,
+  "fields": {
+    "pregunta": 10,
+    "texto_opcion": "C) Beber agua diariamente",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 8,
+  "fields": {
+    "pregunta": 10,
+    "texto_opcion": "D) Dormir con almohada",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 9,
+  "fields": {
+    "pregunta": 11,
+    "texto_opcion": "A) Para examinar los pulmones",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 10,
+  "fields": {
+    "pregunta": 11,
+    "texto_opcion": "B) Para medir la presión arterial",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 11,
+  "fields": {
+    "pregunta": 11,
+    "texto_opcion": "C) Para detectar cambios o lesiones en las mamas",
+    "es_correcta": true
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 12,
+  "fields": {
+    "pregunta": 11,
+    "texto_opcion": "D) Para detectar problemas de visión",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 13,
+  "fields": {
+    "pregunta": 12,
+    "texto_opcion": "A) Consultar a un profesional de salud",
+    "es_correcta": true
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 14,
+  "fields": {
+    "pregunta": 12,
+    "texto_opcion": "B) Esperar varios meses sin hacer nada",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 15,
+  "fields": {
+    "pregunta": 12,
+    "texto_opcion": "C) Automedicarse",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 16,
+  "fields": {
+    "pregunta": 12,
+    "texto_opcion": "D) Realizar ejercicio intenso para que desaparezca",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 17,
+  "fields": {
+    "pregunta": 13,
+    "texto_opcion": "A) Cambiar de sostén",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 18,
+  "fields": {
+    "pregunta": 13,
+    "texto_opcion": "B) Sentir cansancio después de hacer ejercicio",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 19,
+  "fields": {
+    "pregunta": 13,
+    "texto_opcion": "C) Tener hambre durante el día",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 20,
+  "fields": {
+    "pregunta": 13,
+    "texto_opcion": "D) Notar una secreción nueva o inusual por el pezón",
+    "es_correcta": true
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 21,
+  "fields": {
+    "pregunta": 14,
+    "texto_opcion": "A) Porque evita completamente cualquier tratamiento",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 22,
+  "fields": {
+    "pregunta": 14,
+    "texto_opcion": "B) Porque puede aumentar las posibilidades de un tratamiento exitoso",
+    "es_correcta": true
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 23,
+  "fields": {
+    "pregunta": 14,
+    "texto_opcion": "C) Porque significa que siempre desaparecerá solo",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 24,
+  "fields": {
+    "pregunta": 14,
+    "texto_opcion": "D) Porque impide que vuelva a aparecer",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 25,
+  "fields": {
+    "pregunta": 15,
+    "texto_opcion": "A) Todos los bultos son cáncer",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 26,
+  "fields": {
+    "pregunta": 15,
+    "texto_opcion": "B) Ningún bulto necesita evaluación médica",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 27,
+  "fields": {
+    "pregunta": 15,
+    "texto_opcion": "C) Muchos bultos son benignos, pero deben ser evaluados si son nuevos",
+    "es_correcta": true
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 28,
+  "fields": {
+    "pregunta": 15,
+    "texto_opcion": "D) Solo deben revisarse si producen mucho dolor",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 29,
+  "fields": {
+    "pregunta": 16,
+    "texto_opcion": "A) Piel de naranja o hundimientos visibles",
+    "es_correcta": true
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 30,
+  "fields": {
+    "pregunta": 16,
+    "texto_opcion": "B) Una marca temporal de la ropa",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 31,
+  "fields": {
+    "pregunta": 16,
+    "texto_opcion": "C) Bronceado después de exponerse al sol",
+    "es_correcta": false
+  }
+},
+{
+  "model": "prevencion.opcionrespuesta",
+  "pk": 32,
+  "fields": {
+    "pregunta": 16,
+    "texto_opcion": "D) Resequedad ocasional",
+    "es_correcta": false
+  }
+}
+]

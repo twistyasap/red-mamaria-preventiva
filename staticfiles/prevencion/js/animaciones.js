@@ -1,29 +1,62 @@
 /* ===================================================
-   ANIMACIONES DE DISEÑO — Red Mamaria Preventiva
-   Solo efectos visuales: no altera formularios, fetch
-   ni la lógica de ninguna vista.
+   ANIMACIONES DE DISEÑO & CONTROL DE MODAL Y CARGA
+   Red Mamaria Preventiva
    =================================================== */
 document.addEventListener("DOMContentLoaded", function () {
 
-    /* ---- 1. Efecto "ripple" al hacer clic en botones ---- */
-    document.querySelectorAll(".btn").forEach(function (btn) {
-        btn.addEventListener("click", function (e) {
-            const rect = btn.getBoundingClientRect();
-            const ripple = document.createElement("span");
-            const size = Math.max(rect.width, rect.height);
-            ripple.classList.add("ripple");
-            ripple.style.width = ripple.style.height = size + "px";
-            ripple.style.left = (e.clientX - rect.left - size / 2) + "px";
-            ripple.style.top = (e.clientY - rect.top - size / 2) + "px";
-            btn.appendChild(ripple);
-            setTimeout(function () { ripple.remove(); }, 600);
-        });
-    });
+    /* ---- 1. Control de Selección y Carga de Imagen ---- */
+    const dropzone = document.getElementById('dropzone');
+    const input = document.getElementById('imagenInput');
+    const preview = document.getElementById('previewImg');
+    const submitBtn = document.getElementById('submitBtn');
 
-    /* ---- 2. Revelado progresivo al hacer scroll ---- */
-    const revelables = document.querySelectorAll(
-        ".card, .card-session, .reveal-on-scroll"
-    );
+    if (dropzone && input) {
+        dropzone.addEventListener('click', () => input.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                mostrarPreview();
+            }
+        });
+
+        input.addEventListener('change', mostrarPreview);
+    }
+
+    function mostrarPreview() {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (preview) {
+                preview.src = e.target.result;
+                preview.style.display = 'inline-block';
+            }
+        };
+        reader.readAsDataURL(file);
+        if (submitBtn) {
+            submitBtn.disabled = false;
+        }
+    }
+
+    /* ---- 2. Mostrar Modal al Cargar ---- */
+    const modal = document.getElementById('modalOpcional');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+    }
+
+    /* ---- 3. Revelado progresivo al hacer scroll ---- */
+    const revelables = document.querySelectorAll(".card, .card-session, .reveal-on-scroll");
     revelables.forEach(function (el) { el.classList.add("reveal-on-scroll"); });
 
     if ("IntersectionObserver" in window) {
@@ -41,38 +74,40 @@ document.addEventListener("DOMContentLoaded", function () {
         revelables.forEach(function (el) { el.classList.add("is-visible"); });
     }
 
-    /* ---- 3. Transición suave entre páginas ----
-       Solo intercepta enlaces internos normales (misma pestaña,
-       sin target=_blank, sin # ni mailto/tel), para no afectar
-       formularios, botones de submit ni enlaces externos. */
-    document.querySelectorAll("a[href]").forEach(function (link) {
-        const href = link.getAttribute("href");
-        if (
-            !href ||
-            href.startsWith("#") ||
-            href.startsWith("mailto:") ||
-            href.startsWith("tel:") ||
-            link.target === "_blank" ||
-            link.hasAttribute("download")
-        ) {
-            return;
-        }
-
+    /* ---- 4. Navegación segura solo para la flecha de volver ---- */
+    document.querySelectorAll(".nav-link-custom").forEach(function (link) {
         link.addEventListener("click", function (e) {
-            e.preventDefault();
-            document.body.classList.add("page-leaving");
-            setTimeout(function () {
-                window.location.href = href;
-            }, 220);
+            const href = link.getAttribute("href");
+            if (href && href !== "#") {
+                e.preventDefault();
+                document.body.classList.add("page-leaving");
+                setTimeout(function () {
+                    window.location.href = href;
+                }, 220);
+            }
         });
     });
 
-    /* ---- 4. Arreglo del botón "Atrás" (bfcache) ----
-       Cuando el navegador restaura una página desde su caché
-       (al volver atrás), la clase "page-leaving" podía quedar
-       pegada y dejaba la página invisible hasta un segundo clic.
-       Esto la limpia apenas la página vuelve a mostrarse. */
     window.addEventListener("pageshow", function () {
         document.body.classList.remove("page-leaving");
     });
+});
+
+/* ---- Funciones Globales para Cerrar Modal ---- */
+function cerrarModal() {
+    const modal = document.getElementById('modalOpcional');
+    if (modal) {
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.setProperty('display', 'none', 'important');
+        }, 200);
+    }
+}
+
+// Cerrar si hace clic fuera del recuadro blanco
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('modalOpcional');
+    if (event.target === modal) {
+        cerrarModal();
+    }
 });

@@ -238,22 +238,9 @@ document.addEventListener("DOMContentLoaded", function () {
     // PEDIR RESPUESTA A SONIA
     // =========================
 
-    // Si Google está saturado, el chat espera un poco y vuelve a
-    // intentar solo una vez antes de mostrar el error.
-    const REINTENTOS_AUTOMATICOS = 1;
-    const ESPERA_REINTENTO_MS = 4000;
-
-    const TEXTO_ESCRIBIENDO = typingIndicator
-        ? typingIndicator.textContent.trim()
-        : "";
-
-    function esperar(ms) {
-        return new Promise(function (resolver) {
-            setTimeout(resolver, ms);
-        });
-    }
-
-    // Hace UN intento. Retorna { ok, respuesta, reintentable }.
+    // Hace UN intento. Retorna { ok, respuesta, respaldo }.
+    // Si Gemini no responde, el servidor entrega una respuesta de
+    // respaldo (respaldo: true) en vez de un error.
     async function consultarSonia(texto) {
 
         try {
@@ -276,12 +263,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 data = await response.json();
             } catch (error) {
                 // Respuesta que no es JSON (por ejemplo, el servidor se
-                // demoró demasiado): vale la pena reintentar.
+                // demoró demasiado).
                 return {
                     ok: false,
                     respuesta: "No se pudo conectar con el asistente. " +
-                        "Intenta nuevamente en unos segundos.",
-                    reintentable: true
+                        "Intenta nuevamente en unos segundos."
                 };
             }
 
@@ -293,12 +279,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     ok: false,
                     respuesta: data.respuesta || data.error ||
                         "No pude generar una respuesta en este momento. " +
-                        "Intenta nuevamente.",
-                    reintentable: Boolean(data.reintentable)
+                        "Intenta nuevamente."
                 };
             }
 
-            return { ok: true, respuesta: data.respuesta };
+            return {
+                ok: true,
+                respuesta: data.respuesta,
+                respaldo: Boolean(data.respaldo)
+            };
 
         } catch (error) {
 
@@ -308,39 +297,19 @@ document.addEventListener("DOMContentLoaded", function () {
             return {
                 ok: false,
                 respuesta: "No se pudo conectar con el asistente. " +
-                    "Intenta nuevamente en unos segundos.",
-                reintentable: true
+                    "Intenta nuevamente en unos segundos."
             };
         }
     }
 
-    // Pide la respuesta, reintentando solo si el error fue temporal,
-    // y muestra el resultado en el chat.
+    // Pide la respuesta (un solo intento, para no gastar llamadas a
+    // Gemini) y muestra el resultado en el chat.
     async function responderMensaje(texto) {
 
         mostrarEscribiendo();
         bloquearChat(true);
 
-        let resultado = await consultarSonia(texto);
-
-        for (
-            let intento = 1;
-            !resultado.ok && resultado.reintentable &&
-            intento <= REINTENTOS_AUTOMATICOS;
-            intento++
-        ) {
-            if (typingIndicator) {
-                typingIndicator.textContent =
-                    "Sonia está tardando un poco más de lo normal…";
-            }
-
-            await esperar(ESPERA_REINTENTO_MS);
-            resultado = await consultarSonia(texto);
-        }
-
-        if (typingIndicator) {
-            typingIndicator.textContent = TEXTO_ESCRIBIENDO;
-        }
+        const resultado = await consultarSonia(texto);
 
         ocultarEscribiendo();
         bloquearChat(false);
@@ -349,12 +318,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
             agregarMensaje(resultado.respuesta, "sonia");
 
-            // Solo las preguntas que Sonia respondió de verdad
-            // pasan a formar parte de la conversación.
-            historial.push(
-                { rol: "usuario", texto: texto },
-                { rol: "sonia", texto: resultado.respuesta }
-            );
+            // Solo las respuestas de la IA pasan a formar parte de la
+            // conversación (las de respaldo son información general).
+            if (!resultado.respaldo) {
+                historial.push(
+                    { rol: "usuario", texto: texto },
+                    { rol: "sonia", texto: resultado.respuesta }
+                );
+            }
 
         } else {
 

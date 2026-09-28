@@ -155,13 +155,14 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 SONIA_MOSTRAR_ERRORES = DEBUG and not os.environ.get("VERCEL")
 
 # Modelos a probar en orden, separados por coma. Si el primero no existe o
-# está saturado, se intenta con el siguiente.
+# está saturado, se intenta con el siguiente. Van primero los que más
+# respondieron en los logs de Vercel (los 3.5 suelen estar saturados).
 GEMINI_MODELS = [
     modelo.strip()
     for modelo in os.getenv(
         "GEMINI_MODELS",
-        "gemini-3.5-flash,gemini-3.5-flash-lite,"
-        "gemini-3.1-flash-lite,gemma-4-26b-a4b-it"
+        "gemini-3.1-flash-lite,gemma-4-26b-a4b-it,"
+        "gemini-3.5-flash,gemini-3.5-flash-lite"
     ).split(",")
     if modelo.strip()
 ]

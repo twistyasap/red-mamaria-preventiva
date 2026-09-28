@@ -13,6 +13,7 @@ from django.views.decorators.http import require_POST
 from django.conf import settings
 
 
+from .services.respuestas_respaldo import obtener_respuesta_respaldo
 from .models import (
     PreguntaEducativa,
     AnalisisEcografia,
@@ -334,7 +335,7 @@ def asistente_virtual(request):
 # CHATBOT SONIA - GEMINI
 # ============================================================
 
-def respuesta_error_sonia(mensaje, detalle, status, reintentable=False):
+def respuesta_error_sonia(mensaje, detalle, status):
     """
     Respuesta de error del chat. En tu PC (SONIA_MOSTRAR_ERRORES) agrega
     el detalle técnico para poder ver en el chat qué falló realmente;
@@ -349,9 +350,6 @@ def respuesta_error_sonia(mensaje, detalle, status, reintentable=False):
             'respuesta': mensaje,
             # El navegador no guarda estos mensajes en el historial
             'es_error': True,
-            # Si es True, el navegador vuelve a intentar solo (el error
-            # fue temporal, por ejemplo Google saturado)
-            'reintentable': reintentable,
         },
         status=status
     )
@@ -674,16 +672,19 @@ hombres?"), respóndela en relación a lo que se venía hablando.
     RONDAS = 2
     ESPERA_ENTRE_RONDAS = 2  # segundos
 
-    # Segundos que se espera a cada modelo. El último de la ronda es el
-    # respaldo final, así que se le da más margen antes de rendirse.
-    TIEMPO_ESPERA = 20
-    TIEMPO_ESPERA_ULTIMO = 40
+    # Segundos que se espera a cada modelo, y tope para todo el proceso:
+    # al cumplirse, se deja de intentar y se usa la respuesta de respaldo,
+    # para que la persona nunca espere demasiado.
+    TIEMPO_ESPERA = 30
+    TIEMPO_MAXIMO_TOTAL = 60
+    inicio = time.monotonic()
 
     res_data = None
     modelo_utilizado = None
     errores = []
     modelos_pendientes = list(settings.GEMINI_MODELS)
     reintentables = []
+    tiempo_agotado = False
 
     for ronda in range(1, RONDAS + 1):
 
@@ -696,15 +697,22 @@ hombres?"), respóndela en relación a lo que se venía hablando.
 
         for modelo in modelos_pendientes:
 
-            es_ultimo = modelo == modelos_pendientes[-1]
+            tiempo_restante = (
+                TIEMPO_MAXIMO_TOTAL - (time.monotonic() - inicio)
+            )
+
+            if tiempo_restante < 3:
+                errores.append(
+                    f"Se alcanzó el tope de {TIEMPO_MAXIMO_TOTAL} s"
+                )
+                tiempo_agotado = True
+                break
 
             datos, error, reintentable = consultar_gemini(
                 modelo,
                 payload,
                 headers,
-                timeout=(
-                    TIEMPO_ESPERA_ULTIMO if es_ultimo else TIEMPO_ESPERA
-                )
+                timeout=min(TIEMPO_ESPERA, tiempo_restante)
             )
 
             if datos is not None:
@@ -726,7 +734,7 @@ hombres?"), respóndela en relación a lo que se venía hablando.
 
         # Solo se repiten los modelos que fallaron por algo temporal
         # (saturación, límite de uso, timeout), no los inexistentes.
-        if res_data is not None or not reintentables:
+        if res_data is not None or not reintentables or tiempo_agotado:
             break
 
         modelos_pendientes = reintentables
@@ -736,16 +744,26 @@ hombres?"), respóndela en relación a lo que se venía hablando.
     # 8. NINGÚN MODELO RESPONDIÓ
     # ========================================================
 
+    # En vez de mostrar un error, Sonia entrega información general
+    # preescrita sobre el tema, para que el chat nunca quede sin respuesta.
     if res_data is None:
 
-        return respuesta_error_sonia(
-            'Estoy teniendo dificultades para responder '
-            'en este momento. Intenta nuevamente '
-            'en unos segundos.',
-            '\n'.join(errores) or 'No hay modelos configurados.',
-            status=503,
-            # Solo si todo falló por algo temporal (saturación, timeout)
-            reintentable=bool(reintentables)
+        print("SONIA: ningún modelo respondió, se usa respuesta de respaldo")
+
+        respuesta = obtener_respuesta_respaldo(mensaje_usuario)
+
+        if settings.SONIA_MOSTRAR_ERRORES:
+            respuesta += '\n\n[DEBUG] ' + (
+                '\n'.join(errores) or 'No hay modelos configurados.'
+            )
+
+        return JsonResponse(
+            {
+                'respuesta': respuesta,
+                # El navegador la muestra, pero no la guarda en el
+                # historial de la conversación.
+                'respaldo': True,
+            }
         )
 
 

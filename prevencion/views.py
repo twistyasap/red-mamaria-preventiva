@@ -1,5 +1,6 @@
 import json
 import random
+import time
 import requests
 
 from django.shortcuts import render, redirect
@@ -350,6 +351,61 @@ def respuesta_error_sonia(mensaje, detalle, status):
     )
 
 
+def consultar_gemini(modelo, payload, headers):
+    """
+    Envía el mensaje a un modelo de Gemini.
+
+    Retorna (datos, error, reintentable):
+      - datos: el JSON de la respuesta si salió bien, o None.
+      - error: texto del error si falló.
+      - reintentable: True si el error es temporal (saturación, límite
+        de uso, timeout), False si no, y None si la API key es inválida.
+    """
+
+    url = (
+        "https://generativelanguage.googleapis.com/"
+        f"v1beta/models/{modelo}:generateContent"
+    )
+
+    try:
+
+        response = requests.post(
+            url,
+            json=payload,
+            headers=headers,
+            timeout=20
+        )
+
+    except requests.exceptions.RequestException as error:
+
+        return None, f"{modelo}: error de conexión ({error})", True
+
+    try:
+
+        datos = response.json()
+
+    except ValueError:
+
+        return (
+            None,
+            f"{modelo}: respuesta no JSON (HTTP {response.status_code})",
+            True
+        )
+
+    if response.status_code == 200:
+        return datos, None, False
+
+    mensaje_error = datos.get('error', {}).get('message', '')
+    error = f"{modelo}: HTTP {response.status_code} - {mensaje_error}"
+
+    if response.status_code in [401, 403] or (
+        'api key' in mensaje_error.lower()
+    ):
+        return None, error, None
+
+    return None, error, response.status_code in [429, 500, 502, 503, 504]
+
+
 @login_required(login_url='iniciar_sesion')
 @require_POST
 def asistente_virtual_mensaje(request):
@@ -547,67 +603,57 @@ Responde directamente a la pregunta del usuario.
     # 7. INTENTAR CONSULTAR GEMINI (modelo por modelo)
     # ========================================================
 
+    # Cuando Google está saturado (503) el modelo que responde va
+    # cambiando de un momento a otro, así que si todos fallan por un
+    # error temporal se espera un poco y se intenta una ronda más.
+    RONDAS = 2
+    ESPERA_ENTRE_RONDAS = 2  # segundos
+
     res_data = None
     modelo_utilizado = None
     errores = []
+    modelos_pendientes = list(settings.GEMINI_MODELS)
 
-    for modelo in settings.GEMINI_MODELS:
+    for ronda in range(1, RONDAS + 1):
 
-        url = (
-            "https://generativelanguage.googleapis.com/"
-            f"v1beta/models/{modelo}:generateContent"
-        )
+        if ronda > 1:
+            print(f"SONIA: todos saturados, ronda {ronda} en "
+                  f"{ESPERA_ENTRE_RONDAS} s")
+            time.sleep(ESPERA_ENTRE_RONDAS)
 
-        try:
+        reintentables = []
 
-            response = requests.post(
-                url,
-                json=payload,
-                headers=headers,
-                timeout=30
+        for modelo in modelos_pendientes:
+
+            datos, error, reintentable = consultar_gemini(
+                modelo,
+                payload,
+                headers
             )
 
-        except requests.exceptions.RequestException as error:
+            if datos is not None:
+                res_data = datos
+                modelo_utilizado = modelo
+                break
 
-            errores.append(f"{modelo}: error de conexión ({error})")
+            errores.append(f"[ronda {ronda}] {error}")
             print(f"SONIA: {errores[-1]}")
-            continue
 
-        try:
+            # API key inválida o sin permisos: ningún otro modelo va a
+            # funcionar, así que no tiene sentido seguir intentando.
+            if reintentable is None:
+                reintentables = []
+                break
 
-            datos = response.json()
+            if reintentable:
+                reintentables.append(modelo)
 
-        except ValueError:
-
-            errores.append(
-                f"{modelo}: respuesta no JSON "
-                f"(HTTP {response.status_code})"
-            )
-            print(f"SONIA: {errores[-1]}")
-            continue
-
-        if response.status_code == 200:
-
-            res_data = datos
-            modelo_utilizado = modelo
+        # Solo se repiten los modelos que fallaron por algo temporal
+        # (saturación, límite de uso, timeout), no los inexistentes.
+        if res_data is not None or not reintentables:
             break
 
-        mensaje_error = datos.get('error', {}).get('message', '')
-
-        errores.append(
-            f"{modelo}: HTTP {response.status_code} - {mensaje_error}"
-        )
-        print(f"SONIA: {errores[-1]}")
-
-        # API key inválida o sin permisos: ningún otro modelo va a
-        # funcionar, así que no tiene sentido seguir intentando.
-        if response.status_code in [401, 403] or (
-            'api key' in mensaje_error.lower()
-        ):
-            break
-
-        # Cualquier otro error (modelo inexistente, saturado, límite de
-        # uso, etc.) se intenta con el siguiente modelo.
+        modelos_pendientes = reintentables
 
 
     # ========================================================

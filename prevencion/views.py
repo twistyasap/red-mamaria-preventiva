@@ -336,19 +336,75 @@ def asistente_virtual(request):
 
 def respuesta_error_sonia(mensaje, detalle, status):
     """
-    Respuesta de error del chat. Con DEBUG activo agrega el detalle
-    técnico para poder ver en el chat qué falló realmente.
+    Respuesta de error del chat. En tu PC (SONIA_MOSTRAR_ERRORES) agrega
+    el detalle técnico para poder ver en el chat qué falló realmente;
+    en Vercel el público solo ve el mensaje amable.
     """
 
-    if settings.DEBUG:
+    if settings.SONIA_MOSTRAR_ERRORES:
         mensaje = f"{mensaje}\n\n[DEBUG] {detalle}"
 
     return JsonResponse(
         {
-            'respuesta': mensaje
+            'respuesta': mensaje,
+            # El navegador no guarda estos mensajes en el historial
+            'es_error': True,
         },
         status=status
     )
+
+
+MAX_MENSAJES_HISTORIAL = 10
+MAX_LARGO_MENSAJE_HISTORIAL = 2000
+
+
+def armar_historial(historial):
+    """
+    Convierte los mensajes anteriores del chat (enviados por el navegador)
+    al formato "contents" de Gemini, para que Sonia recuerde la conversación.
+
+    Cada elemento viene como {"rol": "usuario" | "sonia", "texto": "..."}.
+    Se ignora lo que no tenga ese formato, se conservan solo los últimos
+    mensajes y se juntan los mensajes seguidos del mismo rol.
+    """
+
+    if not isinstance(historial, list):
+        return []
+
+    roles = {
+        'usuario': 'user',
+        'sonia': 'model',
+    }
+
+    contents = []
+
+    for item in historial[-MAX_MENSAJES_HISTORIAL:]:
+
+        if not isinstance(item, dict):
+            continue
+
+        rol = roles.get(item.get('rol'))
+        texto = item.get('texto')
+
+        if not rol or not isinstance(texto, str) or not texto.strip():
+            continue
+
+        texto = texto.strip()[:MAX_LARGO_MENSAJE_HISTORIAL]
+
+        if contents and contents[-1]['role'] == rol:
+            contents[-1]['parts'][0]['text'] += '\n\n' + texto
+        else:
+            contents.append({'role': rol, 'parts': [{'text': texto}]})
+
+    # La conversación debe empezar con un mensaje del usuario
+    while contents and contents[0]['role'] != 'user':
+        contents.pop(0)
+
+    # Y terminar en Sonia, porque a continuación va el mensaje nuevo
+    if contents and contents[-1]['role'] == 'user':
+        contents.pop()
+
+    return contents
 
 
 def consultar_gemini(modelo, payload, headers):
@@ -551,6 +607,10 @@ que tu función principal es orientar sobre salud mamaria.
 
 No comiences todas las respuestas diciendo "Hola".
 Responde directamente a la pregunta del usuario.
+
+Ten en cuenta los mensajes anteriores de la conversación: si el
+usuario hace una pregunta de seguimiento (por ejemplo "¿y en
+hombres?"), respóndela en relación a lo que se venía hablando.
 """
 
 
@@ -568,7 +628,9 @@ Responde directamente a la pregunta del usuario.
             ]
         },
 
-        "contents": [
+        # Mensajes anteriores del chat + el mensaje nuevo, para que Sonia
+        # pueda seguir la conversación.
+        "contents": armar_historial(data.get('historial')) + [
             {
                 "role": "user",
 

@@ -224,6 +224,15 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =========================
+    // MEMORIA DE LA CONVERSACIÓN
+    // Se envía a Sonia junto con cada mensaje nuevo para que
+    // recuerde lo que se habló. Se borra al recargar la página.
+    // =========================
+
+    const historial = [];
+    const MAX_HISTORIAL = 10;
+
+    // =========================
     // ENVÍO DE MENSAJES
     // =========================
 
@@ -267,7 +276,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     },
 
                     body: JSON.stringify({
-                        mensaje: texto
+                        mensaje: texto,
+                        historial: historial.slice(-MAX_HISTORIAL)
                     }),
 
                 });
@@ -311,6 +321,15 @@ document.addEventListener("DOMContentLoaded", function () {
                         data.respuesta,
                         "sonia"
                     );
+
+                    // Solo las preguntas que Sonia respondió de verdad
+                    // pasan a formar parte de la conversación.
+                    if (!data.es_error) {
+                        historial.push(
+                            { rol: "usuario", texto: texto },
+                            { rol: "sonia", texto: data.respuesta }
+                        );
+                    }
 
                 } else {
 

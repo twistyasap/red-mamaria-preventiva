@@ -149,6 +149,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+# Muestra en el chat el detalle técnico de los errores de Sonia ([DEBUG]).
+# Solo en tu PC: en Vercel (que define la variable VERCEL) se oculta
+# para que el público no vea mensajes técnicos.
+SONIA_MOSTRAR_ERRORES = DEBUG and not os.environ.get("VERCEL")
+
 # Modelos a probar en orden, separados por coma. Si el primero no existe o
 # está saturado, se intenta con el siguiente.
 GEMINI_MODELS = [

@@ -140,6 +140,8 @@ document.addEventListener("DOMContentLoaded", function () {
         messages.appendChild(div);
 
         messages.scrollTop = messages.scrollHeight;
+
+        return div;
     }
 
     // =========================
@@ -233,12 +235,166 @@ document.addEventListener("DOMContentLoaded", function () {
     const MAX_HISTORIAL = 10;
 
     // =========================
+    // PEDIR RESPUESTA A SONIA
+    // =========================
+
+    // Si Google está saturado, el chat espera un poco y vuelve a
+    // intentar solo una vez antes de mostrar el error.
+    const REINTENTOS_AUTOMATICOS = 1;
+    const ESPERA_REINTENTO_MS = 4000;
+
+    const TEXTO_ESCRIBIENDO = typingIndicator
+        ? typingIndicator.textContent.trim()
+        : "";
+
+    function esperar(ms) {
+        return new Promise(function (resolver) {
+            setTimeout(resolver, ms);
+        });
+    }
+
+    // Hace UN intento. Retorna { ok, respuesta, reintentable }.
+    async function consultarSonia(texto) {
+
+        try {
+
+            const response = await fetch(CHAT_ENDPOINT, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": CSRF_TOKEN,
+                },
+                body: JSON.stringify({
+                    mensaje: texto,
+                    historial: historial.slice(-MAX_HISTORIAL)
+                }),
+            });
+
+            let data;
+
+            try {
+                data = await response.json();
+            } catch (error) {
+                // Respuesta que no es JSON (por ejemplo, el servidor se
+                // demoró demasiado): vale la pena reintentar.
+                return {
+                    ok: false,
+                    respuesta: "No se pudo conectar con el asistente. " +
+                        "Intenta nuevamente en unos segundos.",
+                    reintentable: true
+                };
+            }
+
+            if (!response.ok || data.es_error || !data.respuesta) {
+
+                console.error("Error de Sonia:", response.status, data);
+
+                return {
+                    ok: false,
+                    respuesta: data.respuesta || data.error ||
+                        "No pude generar una respuesta en este momento. " +
+                        "Intenta nuevamente.",
+                    reintentable: Boolean(data.reintentable)
+                };
+            }
+
+            return { ok: true, respuesta: data.respuesta };
+
+        } catch (error) {
+
+            // Sin conexión o la petición no llegó al servidor
+            console.error("Error al comunicarse con Sonia:", error);
+
+            return {
+                ok: false,
+                respuesta: "No se pudo conectar con el asistente. " +
+                    "Intenta nuevamente en unos segundos.",
+                reintentable: true
+            };
+        }
+    }
+
+    // Pide la respuesta, reintentando solo si el error fue temporal,
+    // y muestra el resultado en el chat.
+    async function responderMensaje(texto) {
+
+        mostrarEscribiendo();
+        bloquearChat(true);
+
+        let resultado = await consultarSonia(texto);
+
+        for (
+            let intento = 1;
+            !resultado.ok && resultado.reintentable &&
+            intento <= REINTENTOS_AUTOMATICOS;
+            intento++
+        ) {
+            if (typingIndicator) {
+                typingIndicator.textContent =
+                    "Sonia está tardando un poco más de lo normal…";
+            }
+
+            await esperar(ESPERA_REINTENTO_MS);
+            resultado = await consultarSonia(texto);
+        }
+
+        if (typingIndicator) {
+            typingIndicator.textContent = TEXTO_ESCRIBIENDO;
+        }
+
+        ocultarEscribiendo();
+        bloquearChat(false);
+
+        if (resultado.ok) {
+
+            agregarMensaje(resultado.respuesta, "sonia");
+
+            // Solo las preguntas que Sonia respondió de verdad
+            // pasan a formar parte de la conversación.
+            historial.push(
+                { rol: "usuario", texto: texto },
+                { rol: "sonia", texto: resultado.respuesta }
+            );
+
+        } else {
+
+            mostrarErrorConReintento(resultado.respuesta, texto);
+        }
+
+        input.focus();
+    }
+
+    // Mensaje de error con un botón para volver a preguntar lo mismo
+    // sin tener que escribirlo de nuevo.
+    function mostrarErrorConReintento(textoError, textoPregunta) {
+
+        const mensaje = agregarMensaje(textoError, "sonia");
+
+        if (!mensaje) {
+            return;
+        }
+
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "btn-reintentar-sonia";
+        boton.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Reintentar';
+
+        boton.addEventListener("click", function () {
+            mensaje.remove();
+            responderMensaje(textoPregunta);
+        });
+
+        mensaje.appendChild(boton);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    // =========================
     // ENVÍO DE MENSAJES
     // =========================
 
     if (form && input) {
 
-        form.addEventListener("submit", async function (e) {
+        form.addEventListener("submit", function (e) {
 
             e.preventDefault();
 
@@ -252,116 +408,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
             ocultarAvisoVacio();
 
-            // Mostrar mensaje del usuario
+            // Mostrar mensaje del usuario y limpiar el campo
             agregarMensaje(texto, "usuario");
-
-            // Limpiar input
             input.value = "";
 
-            // Mostrar indicador de escritura
-            mostrarEscribiendo();
-
-            // Evitar mensajes duplicados mientras responde Gemini
-            bloquearChat(true);
-
-            try {
-
-                const response = await fetch(CHAT_ENDPOINT, {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": CSRF_TOKEN,
-                    },
-
-                    body: JSON.stringify({
-                        mensaje: texto,
-                        historial: historial.slice(-MAX_HISTORIAL)
-                    }),
-
-                });
-
-                let data;
-
-                try {
-                    data = await response.json();
-                } catch (error) {
-
-                    throw new Error(
-                        "El servidor devolvió una respuesta inválida."
-                    );
-                }
-
-                ocultarEscribiendo();
-
-                // Si Django respondió con error HTTP
-                if (!response.ok) {
-
-                    console.error(
-                        "Error HTTP:",
-                        response.status,
-                        data
-                    );
-
-                    agregarMensaje(
-                        data.respuesta ||
-                        data.error ||
-                        "Ocurrió un error al procesar tu mensaje.",
-                        "sonia"
-                    );
-
-                    return;
-                }
-
-                // Respuesta correcta del chatbot
-                if (data.respuesta) {
-
-                    agregarMensaje(
-                        data.respuesta,
-                        "sonia"
-                    );
-
-                    // Solo las preguntas que Sonia respondió de verdad
-                    // pasan a formar parte de la conversación.
-                    if (!data.es_error) {
-                        historial.push(
-                            { rol: "usuario", texto: texto },
-                            { rol: "sonia", texto: data.respuesta }
-                        );
-                    }
-
-                } else {
-
-                    agregarMensaje(
-                        "No pude generar una respuesta en este momento. Intenta nuevamente.",
-                        "sonia"
-                    );
-                }
-
-            } catch (error) {
-
-                ocultarEscribiendo();
-
-                console.error(
-                    "Error al comunicarse con Sonia:",
-                    error
-                );
-
-                agregarMensaje(
-                    "No se pudo conectar con el asistente. Intenta nuevamente en unos segundos.",
-                    "sonia"
-                );
-
-            } finally {
-
-                // Reactivar input
-                bloquearChat(false);
-
-                // Volver a colocar cursor
-                input.focus();
-            }
-
+            responderMensaje(texto);
         });
 
     }

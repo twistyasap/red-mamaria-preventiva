@@ -334,7 +334,7 @@ def asistente_virtual(request):
 # CHATBOT SONIA - GEMINI
 # ============================================================
 
-def respuesta_error_sonia(mensaje, detalle, status):
+def respuesta_error_sonia(mensaje, detalle, status, reintentable=False):
     """
     Respuesta de error del chat. En tu PC (SONIA_MOSTRAR_ERRORES) agrega
     el detalle técnico para poder ver en el chat qué falló realmente;
@@ -349,6 +349,9 @@ def respuesta_error_sonia(mensaje, detalle, status):
             'respuesta': mensaje,
             # El navegador no guarda estos mensajes en el historial
             'es_error': True,
+            # Si es True, el navegador vuelve a intentar solo (el error
+            # fue temporal, por ejemplo Google saturado)
+            'reintentable': reintentable,
         },
         status=status
     )
@@ -407,7 +410,7 @@ def armar_historial(historial):
     return contents
 
 
-def consultar_gemini(modelo, payload, headers):
+def consultar_gemini(modelo, payload, headers, timeout=20):
     """
     Envía el mensaje a un modelo de Gemini.
 
@@ -429,7 +432,7 @@ def consultar_gemini(modelo, payload, headers):
             url,
             json=payload,
             headers=headers,
-            timeout=20
+            timeout=timeout
         )
 
     except requests.exceptions.RequestException as error:
@@ -671,10 +674,16 @@ hombres?"), respóndela en relación a lo que se venía hablando.
     RONDAS = 2
     ESPERA_ENTRE_RONDAS = 2  # segundos
 
+    # Segundos que se espera a cada modelo. El último de la ronda es el
+    # respaldo final, así que se le da más margen antes de rendirse.
+    TIEMPO_ESPERA = 20
+    TIEMPO_ESPERA_ULTIMO = 40
+
     res_data = None
     modelo_utilizado = None
     errores = []
     modelos_pendientes = list(settings.GEMINI_MODELS)
+    reintentables = []
 
     for ronda in range(1, RONDAS + 1):
 
@@ -687,10 +696,15 @@ hombres?"), respóndela en relación a lo que se venía hablando.
 
         for modelo in modelos_pendientes:
 
+            es_ultimo = modelo == modelos_pendientes[-1]
+
             datos, error, reintentable = consultar_gemini(
                 modelo,
                 payload,
-                headers
+                headers,
+                timeout=(
+                    TIEMPO_ESPERA_ULTIMO if es_ultimo else TIEMPO_ESPERA
+                )
             )
 
             if datos is not None:
@@ -729,7 +743,9 @@ hombres?"), respóndela en relación a lo que se venía hablando.
             'en este momento. Intenta nuevamente '
             'en unos segundos.',
             '\n'.join(errores) or 'No hay modelos configurados.',
-            status=503
+            status=503,
+            # Solo si todo falló por algo temporal (saturación, timeout)
+            reintentable=bool(reintentables)
         )
 
 

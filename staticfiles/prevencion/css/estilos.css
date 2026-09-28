@@ -762,6 +762,27 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 10px;
 }
 
+/* Botón "Reintentar" dentro de un mensaje de error de Sonia */
+.btn-reintentar-sonia {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 5px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #7c3aed;
+    background: #f5f0ff;
+    border: 1px solid #ddd0fb;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-reintentar-sonia:hover {
+    background: #ebe1fe;
+}
+
 /* Párrafos y listas dentro de las respuestas de Sonia */
 .msg-sonia p,
 .msg-sonia ul,

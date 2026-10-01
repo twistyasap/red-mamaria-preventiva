@@ -1,5 +1,4 @@
 import json
-import random
 import time
 import requests
 
@@ -14,10 +13,13 @@ from django.conf import settings
 
 
 from .services.respuestas_respaldo import obtener_respuesta_respaldo
-from .models import (
-    PreguntaEducativa,
-    AnalisisEcografia,
+from .services.analisis_cnn import (
+    analizar_mamografia,
+    ImagenNoValida,
+    UMBRAL_AMARILLO,
+    UMBRAL_ROJO,
 )
+from .models import PreguntaEducativa
 
 
 # ============================================================
@@ -251,70 +253,51 @@ def educativo_sesion(request, tipo_sesion):
 
 @login_required(login_url='iniciar_sesion')
 def analisis_imagen(request):
+    """
+    Analiza la mamografía con la CNN y muestra el resultado.
+    La imagen se procesa en memoria y NO se guarda en ningún lado.
+    """
 
     resultado = None
+    error = None
 
     if request.method == 'POST':
 
-        imagen = request.FILES.get(
-            'imagen_original'
-        )
+        imagen = request.FILES.get('imagen_original')
 
         if not imagen:
 
-            messages.error(
-                request,
-                'Debes seleccionar una imagen antes de continuar.'
-            )
-
-            return redirect(
-                'analisis_imagen'
-            )
-
-        # Resultado temporal mientras se integra la CNN real
-        porcentaje_riesgo = round(
-            random.uniform(5, 40),
-            1
-        )
-
-        if porcentaje_riesgo < 15:
-
-            rango_alerta = 'Verde'
-
-        elif porcentaje_riesgo < 30:
-
-            rango_alerta = 'Amarillo'
+            error = 'Debes seleccionar una imagen antes de continuar.'
 
         else:
 
-            rango_alerta = 'Rojo'
+            try:
+                resultado = analizar_mamografia(imagen.read())
 
-        analisis = AnalisisEcografia.objects.create(
+            except ImagenNoValida as e:
+                error = str(e)
 
-            usuario=request.user,
+            except Exception as e:
+                print('ANÁLISIS: error inesperado:', repr(e))
+                error = (
+                    'Ocurrió un problema al analizar la imagen. '
+                    'Intenta nuevamente en unos minutos.'
+                )
 
-            imagen_original=imagen,
-
-            porcentaje_riesgo=porcentaje_riesgo,
-
-            rango_alerta=rango_alerta,
-        )
-
-        resultado = analisis
-
-        messages.success(
-            request,
-            'Imagen analizada correctamente.'
-        )
-
-    context = {
-        'resultado': resultado,
-    }
+            finally:
+                # Se descarta el archivo subido (no se guarda)
+                imagen.close()
 
     return render(
         request,
         'prevencion/analisis_imagen.html',
-        context
+        {
+            'resultado': resultado,
+            'error': error,
+            # Rangos del semáforo (vienen del config.json del modelo)
+            'rango_verde': round(UMBRAL_AMARILLO * 100),
+            'rango_rojo': round(UMBRAL_ROJO * 100),
+        }
     )
 
 

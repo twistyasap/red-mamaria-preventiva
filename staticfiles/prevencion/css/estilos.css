@@ -510,6 +510,27 @@ h1, h2, h3, h4, h5, h6 {
     --nivel-sombra: rgba(163, 53, 79, 0.14);
 }
 
+/* ---- Resultado del análisis de imagen ---- */
+.mapa-calor {
+    max-width: 100%;
+    max-height: 420px;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(30, 22, 51, 0.15);
+}
+
+.indice-barra {
+    height: 10px;
+    background: #efeaf7;
+    border-radius: 50px;
+    overflow: hidden;
+}
+
+.indice-relleno {
+    height: 100%;
+    background: var(--nivel);
+    border-radius: 50px;
+}
+
 /* ---- Pop-up de bienvenida (Inicio) ---- */
 .modal-bienvenida {
     max-width: 480px;

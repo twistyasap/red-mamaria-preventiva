@@ -58,18 +58,5 @@ class OpcionRespuesta(models.Model):
         return f"[{estado}] {self.texto_opcion}"
 
 
-# Modelo para guardar el Análisis de Imagen Médica (Mamografía / Ecografía)
-class AnalisisEcografia(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Paciente")
-    imagen_original = models.ImageField(upload_to='imagenes_mamarias/', verbose_name="Imagen Mamaria")
-    mapa_gradcam = models.ImageField(upload_to='gradcam/', blank=True, null=True, verbose_name="Mapa de Calor (Grad-CAM)")
-    porcentaje_riesgo = models.FloatField(verbose_name="Porcentaje de Riesgo (%)")
-    rango_alerta = models.CharField(max_length=20, verbose_name="Nivel de Alerta") # Verde, Amarillo, Rojo
-    fecha_analisis = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = "Análisis de Imagen Mamaria"
-        verbose_name_plural = "Análisis de Imágenes Mamarias"
-
-    def __str__(self):
-        return f"Paciente: {self.usuario.username} - Riesgo: {self.porcentaje_riesgo}%"
+# Las mamografías analizadas NO se guardan: se procesan en memoria
+# (ver prevencion/services/analisis_cnn.py).

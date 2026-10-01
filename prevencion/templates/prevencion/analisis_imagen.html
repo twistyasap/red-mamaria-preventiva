@@ -43,12 +43,73 @@
             <h4 class="fw-bold mb-0" style="color:#7c3aed;">Análisis de Imagen</h4>
         </div>
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">
-                    {{ message }}
+        {% if resultado %}
+        <!-- Resultado del análisis (la imagen no se guarda) -->
+        <div class="card-session p-4 mb-4" id="resultado">
+            <h6 class="fw-bold mb-3">Resultado del análisis</h6>
+
+            <div class="row g-4 align-items-start">
+                <div class="col-md-5 text-center">
+                    <img src="{{ resultado.mapa_calor }}" alt="Mapa de calor sobre la mama recortada" class="mapa-calor">
+                    <p class="text-muted small mt-2 mb-0">
+                        La mama tal como la analizó el modelo (recortada y sin etiquetas).
+                        En rojo, las zonas que <strong>más influyeron</strong>; no indica necesariamente dónde hay una lesión.
+                    </p>
                 </div>
-            {% endfor %}
+
+                <div class="col-md-7">
+                    <div class="nivel-tarjeta nivel-{{ resultado.nivel }} mb-3">
+                        <strong>{{ resultado.nivel }}</strong>
+                        {% if resultado.nivel == 'Verde' %}
+                            <span class="nivel-subtitulo">Sin hallazgos llamativos</span>
+                            <p>El modelo no encontró patrones parecidos a las mamografías con cáncer con las que se entrenó. Mantén tus controles preventivos habituales.</p>
+                        {% elif resultado.nivel == 'Amarillo' %}
+                            <span class="nivel-subtitulo">Requiere atención</span>
+                            <p>La imagen tiene algunos patrones parecidos a mamografías con cáncer. Es el resultado más frecuente y no es motivo de alarma: puedes comentarlo con tu médico o matrona en tu próximo control.</p>
+                        {% else %}
+                            <span class="nivel-subtitulo">Conviene consultar</span>
+                            <p>La imagen se parece bastante a mamografías con cáncer del entrenamiento. Esto también ocurre con algunas mamografías sanas, así que no significa que tengas cáncer: te recomendamos comentarlo con tu médico o matrona.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="indice-modelo mb-3">
+                        <div class="d-flex justify-content-between small fw-semibold mb-1">
+                            <span>Índice del modelo</span>
+                            <span>{{ resultado.porcentaje }} / 100</span>
+                        </div>
+                        <div class="indice-barra">
+                            <div class="indice-relleno nivel-{{ resultado.nivel }}" style="width: {{ resultado.porcentaje }}%;"></div>
+                        </div>
+                        <p class="text-muted small mt-2 mb-0">
+                            Este índice <strong>no es la probabilidad de tener cáncer</strong>: indica cuánto se parece
+                            la imagen a las mamografías con cáncer con las que se entrenó el modelo.
+                        </p>
+                    </div>
+
+                    <div class="alert alert-warning small mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        <strong>Modelo experimental, no es un diagnóstico.</strong>
+                        Se entrenó con ~8.000 mamografías digitales de un dataset público (RSNA) y acierta solo de forma
+                        moderada: puede equivocarse en ambos sentidos, y rinde distinto con otros equipos o imágenes
+                        editadas. Solo un profesional de salud puede interpretar tu examen.
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'asistente_virtual' %}" class="btn btn-medtech btn-sm px-3">
+                            <i class="bi bi-robot me-1"></i> Pregúntale a Sonia
+                        </a>
+                        <a href="{% url 'analisis_imagen' %}" class="btn btn-outline-secondary btn-sm px-3">
+                            <i class="bi bi-arrow-repeat me-1"></i> Analizar otra imagen
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-muted small mt-3 mb-0">
+                <i class="bi bi-shield-lock me-1"></i>
+                Tu imagen se analizó en el momento y <strong>no fue guardada</strong>.
+            </p>
+        </div>
         {% endif %}
 
         <!-- 1. ¿Cómo funciona? -->
@@ -60,7 +121,7 @@
                         <span class="paso-numero">1</span>
                         <i class="bi bi-cloud-arrow-up-fill"></i>
                         <strong>Sube tu imagen</strong>
-                        <small>Elige tu mamografía o ecografía en formato JPG o PNG.</small>
+                        <small>Elige tu mamografía en formato JPG o PNG.</small>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -68,7 +129,7 @@
                         <span class="paso-numero">2</span>
                         <i class="bi bi-cpu-fill"></i>
                         <strong>La IA la analiza</strong>
-                        <small>Un modelo de inteligencia artificial revisa la imagen.</small>
+                        <small>Una red neuronal entrenada con ~8.000 mamografías digitales revisa la imagen.</small>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -83,7 +144,16 @@
         </div>
 
         <div class="card-session p-4 mb-4">
-            <p class="text-muted mb-3">Sube tu ecografía o mamografía para una evaluación preliminar.</p>
+            <p class="text-muted mb-3">
+                Sube tu mamografía para una evaluación educativa.
+                <span class="d-block small mt-1"><i class="bi bi-shield-lock me-1"></i>La imagen se analiza en el momento y no se guarda.</span>
+            </p>
+
+            {% if error %}
+            <div class="alert alert-danger small" role="alert">
+                <i class="bi bi-exclamation-circle-fill me-1"></i> {{ error }}
+            </div>
+            {% endif %}
 
             <form method="post" enctype="multipart/form-data" id="uploadForm">
                 {% csrf_token %}
@@ -91,7 +161,7 @@
                     <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
                     <p class="mb-0 mt-2 text-muted" id="dropzoneText">Haz clic o arrastra una imagen aquí (JPG, PNG)</p>
                     <img id="previewImg" class="mt-3">
-                    <input type="file" name="imagen_original" id="imagenInput" accept="image/*" class="d-none" required>
+                    <input type="file" name="imagen_original" id="imagenInput" accept="image/png,image/jpeg" class="d-none" required>
                 </div>
                 <button type="submit" class="btn btn-medtech w-100" id="submitBtn" disabled>
                     <i class="bi bi-search me-1"></i> Analizar Imagen
@@ -99,26 +169,6 @@
             </form>
         </div>
 
-        {% if resultado %}
-        <div class="card-session p-4 mb-4">
-            <h6 class="fw-bold mb-3">Resultado del Análisis</h6>
-            <div class="d-flex align-items-center gap-3">
-                <img src="{{ resultado.imagen_original.url }}" style="width:90px; height:90px; object-fit:cover; border-radius:8px;">
-                <div>
-                    <span class="badge badge-riesgo-{{ resultado.rango_alerta }} mb-1">
-                        Nivel: {{ resultado.rango_alerta }}
-                    </span>
-                    <div class="fw-bold fs-5">{{ resultado.porcentaje_riesgo }}% de riesgo estimado</div>
-                    <div class="text-muted small">{{ resultado.fecha_analisis }}</div>
-                </div>
-            </div>
-            <div class="alert alert-warning mt-3 mb-0 small">
-                <i class="bi bi-info-circle me-1"></i>
-                Este resultado es preliminar y no reemplaza el diagnóstico médico profesional.
-                El modelo de IA de análisis definitivo está en integración.
-            </div>
-        </div>
-        {% endif %}
 
         <!-- 2. ¿Qué significa cada nivel? -->
         <div class="card-session p-4 mb-4">
@@ -141,14 +191,18 @@
                 <div class="col-md-4">
                     <div class="nivel-tarjeta nivel-Rojo">
                         <strong>Rojo</strong>
-                        <span class="nivel-subtitulo">Consulta pronto</span>
-                        <p>Se detectaron señales que deben evaluarse. Pide una hora con un profesional de salud.</p>
+                        <span class="nivel-subtitulo">Conviene consultar</span>
+                        <p>La imagen se parece a casos que requerían evaluación. No significa que haya cáncer: coméntalo con un profesional de salud.</p>
                     </div>
                 </div>
             </div>
             <p class="text-muted small mt-3 mb-0">
                 <i class="bi bi-info-circle me-1"></i>
                 Ningún nivel es un diagnóstico: solo un profesional de salud puede confirmar o descartar una enfermedad.
+            </p>
+            <p class="text-muted small mt-1 mb-0">
+                <i class="bi bi-sliders me-1"></i>
+                Rangos del índice del modelo: Verde menor a {{ rango_verde }} · Amarillo de {{ rango_verde }} a {{ rango_rojo|add:'-1' }} · Rojo {{ rango_rojo }} o más.
             </p>
 
             <!-- Acceso a la asistente Sonia -->
@@ -162,7 +216,8 @@
 
     </div>
 
-    <!-- Modal Informativo / Pop-up -->
+    {% if not resultado and not error %}
+    <!-- Modal Informativo / Pop-up (solo al entrar, no sobre un resultado) -->
     <div id="modalOpcional" class="modal-overlay">
       <div class="modal-card">
         <!-- Botón de cerrar (✕) -->
@@ -201,10 +256,11 @@
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
-          <span>Tu archivo será tratado con confidencialidad.</span>
+          <span>Tu imagen se analiza en el momento y no se guarda.</span>
         </div>
       </div>
     </div>
+    {% endif %}
 
     <script src="{% static 'prevencion/js/animaciones.js' %}"></script>
 </body>

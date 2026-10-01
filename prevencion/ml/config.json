@@ -1,0 +1,52 @@
+{
+  "version": "v2",
+  "dataset": "RSNA Screening Mammography (theoviel/rsna-breast-cancer-512-pngs)",
+  "pregunta": "probabilidad de CÁNCER (sigmoid) - sana/benigna vs requiere evaluación",
+  "base": 512,
+  "img_h": 512,
+  "img_w": 320,
+  "umbral": 0.3938269317150116,
+  "umbral_rojo": 0.7920893430709839,
+  "sensibilidad_objetivo": 0.85,
+  "especificidad_rojo": 0.95,
+  "backbone": "EfficientNetB0",
+  "entrada": "ver preprocesamiento_v2.py: gris -> BASExBASE -> invertir si fondo claro -> mama a la izquierda -> recorte de la mama -> IMG_HxIMG_W -> uint8 -> 3 canales float32 0-255",
+  "metricas_test": {
+    "AUC": 0.6577242714025501,
+    "AUC_IC95": [
+      0.6170055422949032,
+      0.6988814672670665
+    ],
+    "PR_AUC": 0.28886807806161763,
+    "sensibilidad": 0.8797814207650273,
+    "especificidad": 0.27395833333333336,
+    "VPP": 0.18764568764568765,
+    "VPN": 0.9228070175438596,
+    "n": 1143,
+    "prevalencia": 0.16010499000549316
+  },
+  "metricas_val": {
+    "AUC": 0.6373102639667904,
+    "AUC_IC95": [
+      0.5892052346824221,
+      0.6865671477228132
+    ],
+    "PR_AUC": 0.29202642549628455,
+    "sensibilidad": 0.8535031847133758,
+    "especificidad": 0.26965174129353237,
+    "VPP": 0.1543778801843318,
+    "VPN": 0.9217687074829932,
+    "n": 1162,
+    "prevalencia": 0.13511188328266144
+  },
+  "estabilidad_recorte_2pct": {
+    "cambio_medio_pts": 4.864291982725263,
+    "cambian_de_nivel_pct": 12.0
+  },
+  "n_imagenes": {
+    "train": 5801,
+    "val": 1162,
+    "test": 1143
+  },
+  "tensorflow": "2.20.0"
+}

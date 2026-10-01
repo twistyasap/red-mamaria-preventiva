@@ -3,3 +3,10 @@ __pycache__/
 *.pyc
 .env
 .vscode/
+
+# Modelos CNN: se suben los notebooks y scripts, no los archivos pesados
+# (el modelo que usa la página está en prevencion/ml/)
+modelo_cnn*/*.zip
+modelo_cnn*/onnx/*.onnx
+modelo_cnn*/onnx/*.keras
+modelo_cnn*/onnx/*.npy

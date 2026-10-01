@@ -1,0 +1,40 @@
+{
+  "modo": "FULL",
+  "img_h": 512,
+  "img_w": 320,
+  "umbral": 0.2768046259880066,
+  "umbral_youden": 0.34645307064056396,
+  "sensibilidad_objetivo": 0.85,
+  "backbone": "EfficientNetB0",
+  "salida": "probabilidad de MALIGNO (sigmoid)",
+  "entrada": "escala de grises -> resize antialias -> [FULL] voltear si la mitad derecha es más brillante -> redondear a uint8 -> replicar a 3 canales -> float32 0-255 (SIN normalizar)",
+  "metricas_test": {
+    "AUC": 0.7656951801647567,
+    "AUC_IC95": [
+      0.7277352158135364,
+      0.8009865882386614
+    ],
+    "sensibilidad": 0.8549618320610687,
+    "especificidad": 0.49604221635883905,
+    "VPP": 0.5397590361445783,
+    "VPN": 0.831858407079646,
+    "accuracy": 0.6427457098283932,
+    "n": 641
+  },
+  "metricas_val": {
+    "AUC": 0.8030752916224814,
+    "AUC_IC95": [
+      0.7560791184169973,
+      0.8436407088425432
+    ],
+    "sensibilidad": 0.8532608695652174,
+    "especificidad": 0.5804878048780487,
+    "VPP": 0.6460905349794238,
+    "VPN": 0.815068493150685,
+    "accuracy": 0.7095115681233933,
+    "n": 389
+  },
+  "tensorflow": "2.20.0",
+  "keras": "3.13.2",
+  "dataset": "CBIS-DDSM (awsaf49/cbis-ddsm-breast-cancer-image-dataset)"
+}

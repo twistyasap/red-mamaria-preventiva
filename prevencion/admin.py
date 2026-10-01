@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PreguntaEducativa, OpcionRespuesta, AnalisisEcografia
+from .models import PreguntaEducativa, OpcionRespuesta
 
 class OpcionRespuestaInline(admin.TabularInline):
     model = OpcionRespuesta
@@ -23,11 +23,3 @@ class PreguntaEducativaAdmin(admin.ModelAdmin):
     def enunciado_corto(self, obj):
         return obj.enunciado[:60] + "..." if len(obj.enunciado) > 60 else obj.enunciado
     enunciado_corto.short_description = "Pregunta / Mito"
-
-
-@admin.register(AnalisisEcografia)
-class AnalisisEcografiaAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'porcentaje_riesgo', 'rango_alerta', 'fecha_analisis')
-    list_filter = ('rango_alerta', 'fecha_analisis')
-    search_fields = ('usuario__username', 'rango_alerta')
-    readonly_fields = ('fecha_analisis',)

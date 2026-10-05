@@ -62,13 +62,13 @@
                         <strong>{{ resultado.nivel }}</strong>
                         {% if resultado.nivel == 'Verde' %}
                             <span class="nivel-subtitulo">Sin hallazgos llamativos</span>
-                            <p>El modelo no encontró patrones parecidos a las mamografías con cáncer con las que se entrenó. Mantén tus controles preventivos habituales.</p>
+                            <p>No encontramos señales de alerta en tu imagen. Sigue con tus controles preventivos habituales.</p>
                         {% elif resultado.nivel == 'Amarillo' %}
                             <span class="nivel-subtitulo">Requiere atención</span>
-                            <p>La imagen tiene algunos patrones parecidos a mamografías con cáncer. Es el resultado más frecuente y no es motivo de alarma: puedes comentarlo con tu médico o matrona en tu próximo control.</p>
+                            <p>Encontramos algunas zonas que conviene revisar. Es un resultado frecuente y no es motivo de alarma: coméntalo en tu próximo control.</p>
                         {% else %}
                             <span class="nivel-subtitulo">Conviene consultar</span>
-                            <p>La imagen se parece bastante a mamografías con cáncer del entrenamiento. Esto también ocurre con algunas mamografías sanas, así que no significa que tengas cáncer: te recomendamos comentarlo con tu médico o matrona.</p>
+                            <p>Encontramos zonas que sería bueno que revise un profesional. No significa que tengas cáncer, pero te recomendamos pedir una hora con tu médico o matrona.</p>
                         {% endif %}
                     </div>
 
@@ -88,10 +88,10 @@
 
                     <div class="alert alert-warning small mb-3">
                         <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                        <strong>Modelo experimental, no es un diagnóstico.</strong>
-                        Se entrenó con ~8.000 mamografías digitales de un dataset público (RSNA) y acierta solo de forma
-                        moderada: puede equivocarse en ambos sentidos, y rinde distinto con otros equipos o imágenes
-                        editadas. Solo un profesional de salud puede interpretar tu examen.
+                        <strong>Este resultado es solo orientativo.</strong>
+                        Se obtuvo con una inteligencia artificial en etapa experimental, que puede equivocarse.
+                        No reemplaza la evaluación de un profesional de salud: ante cualquier duda, consulta en tu
+                        CESFAM o centro de salud.
                     </div>
 
                     <div class="d-flex flex-wrap gap-2">
@@ -178,21 +178,21 @@
                     <div class="nivel-tarjeta nivel-Verde">
                         <strong>Verde</strong>
                         <span class="nivel-subtitulo">Sin hallazgos llamativos</span>
-                        <p>La imagen no muestra señales de alerta. Mantén tus controles preventivos habituales.</p>
+                        <p>No encontramos señales de alerta en tu imagen. Sigue con tus controles preventivos habituales.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="nivel-tarjeta nivel-Amarillo">
                         <strong>Amarillo</strong>
                         <span class="nivel-subtitulo">Requiere atención</span>
-                        <p>Hay algo que conviene revisar. Coméntalo con tu médico o matrona en tu próximo control.</p>
+                        <p>Encontramos algunas zonas que conviene revisar. Es un resultado frecuente y no es motivo de alarma: coméntalo en tu próximo control.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="nivel-tarjeta nivel-Rojo">
                         <strong>Rojo</strong>
                         <span class="nivel-subtitulo">Conviene consultar</span>
-                        <p>La imagen se parece a casos que requerían evaluación. No significa que haya cáncer: coméntalo con un profesional de salud.</p>
+                        <p>Encontramos zonas que sería bueno que revise un profesional. No significa que tengas cáncer, pero te recomendamos pedir una hora con tu médico o matrona.</p>
                     </div>
                 </div>
             </div>

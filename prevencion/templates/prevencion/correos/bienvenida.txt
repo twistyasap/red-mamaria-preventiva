@@ -1,0 +1,18 @@
+{% autoescape off %}Hola {{ nombre }},
+
+Te damos la bienvenida a nuestra plataforma educativa sobre prevención y concientización del cáncer de mama.
+
+Aquí podrás encontrar contenido interactivo, actividades de aprendizaje, mitos y realidades, preguntas educativas y otras herramientas diseñadas para fortalecer tus conocimientos sobre la detección temprana y el cuidado de la salud.
+
+Te invitamos a comenzar tu recorrido y completar los módulos disponibles:
+{{ enlace }}
+
+¡Gracias por formar parte de esta iniciativa!
+
+Saludos,
+Equipo de Prevención y Concientización
+Red Mamaria Preventiva con AI
+
+---
+Recibes este correo porque creaste una cuenta con esta dirección. Si no fuiste tú, puedes ignorarlo.
+{% endautoescape %}

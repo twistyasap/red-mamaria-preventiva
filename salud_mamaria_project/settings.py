@@ -166,3 +166,27 @@ GEMINI_MODELS = [
     ).split(",")
     if modelo.strip()
 ]
+
+# ============================================================
+# CORREO (bienvenida al registrarse)
+# ============================================================
+# Se envía desde una cuenta de Gmail con una "contraseña de aplicación".
+# Si no están configuradas, los correos se muestran en la terminal
+# (útil para probar en tu PC sin enviar nada real).
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "").replace(" ", "")
+
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_TIMEOUT = 10  # segundos: si Gmail no responde, el registro sigue igual
+DEFAULT_FROM_EMAIL = f"Red Mamaria Preventiva <{EMAIL_HOST_USER or 'no-reply@localhost'}>"
+
+# Vercel atiende por HTTPS a través de un proxy: así Django sabe que la
+# conexión es segura y arma bien los enlaces (por ejemplo, el del correo).
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

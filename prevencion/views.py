@@ -10,9 +10,12 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 
 
 from .services.respuestas_respaldo import obtener_respuesta_respaldo
+from .services.correos import enviar_bienvenida
 from .services.analisis_cnn import (
     analizar_mamografia,
     ImagenNoValida,
@@ -67,6 +70,20 @@ def registro_usuario(request):
                 contexto
             )
 
+        # El correo debe ser válido: ahí llega la bienvenida
+        try:
+            validate_email(correo)
+        except ValidationError:
+            messages.error(
+                request,
+                'El correo no tiene un formato válido (ej: nombre@correo.com).'
+            )
+            return render(
+                request,
+                'prevencion/registro.html',
+                contexto
+            )
+
         if User.objects.filter(username=usuario).exists():
 
             messages.error(
@@ -92,6 +109,12 @@ def registro_usuario(request):
 
         # El Inicio mostrará el pop-up de bienvenida una vez
         request.session['bienvenida'] = 'registro'
+
+        # Correo de bienvenida. Si falla, la cuenta queda creada igual.
+        enviar_bienvenida(
+            nuevo_usuario,
+            request.build_absolute_uri('/')
+        )
 
         return redirect('inicio')
 

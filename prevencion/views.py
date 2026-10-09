@@ -225,9 +225,26 @@ def inicio(request):
 @login_required(login_url='iniciar_sesion')
 def educativo_menu(request):
 
+    # Ids de las preguntas de cada sesión: con ellos el navegador calcula
+    # el progreso (las respuestas se guardan en el navegador, por usuario).
+    preguntas_por_sesion = {
+        sesion: list(
+            PreguntaEducativa.objects.filter(sesion=sesion)
+            .values_list('id', flat=True)
+        )
+        for sesion in ['S1', 'S2', 'S3']
+    }
+
     return render(
         request,
-        'prevencion/menu_educativo.html'
+        'prevencion/menu_educativo.html',
+        {
+            'preguntas_por_sesion': preguntas_por_sesion,
+            'totales': {
+                sesion: len(ids)
+                for sesion, ids in preguntas_por_sesion.items()
+            },
+        }
     )
 
 
@@ -260,7 +277,9 @@ def educativo_sesion(request, tipo_sesion):
     context = {
         'preguntas': preguntas,
         'nombre_sesion': nombre,
-        'codigo_sesion': tipo_sesion
+        'codigo_sesion': tipo_sesion,
+        # Para calcular el progreso de esta sesión en el navegador
+        'ids_preguntas': [pregunta.id for pregunta in preguntas],
     }
 
     return render(

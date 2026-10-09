@@ -135,14 +135,19 @@ def parece_mamografia(imagen):
         + np.abs(a[..., 0] - a[..., 2])
     ).mean() / 3
 
+    if color > 8:
+        return False
+
     gris = a.mean(axis=-1)
 
-    # Mamografía invertida (fondo blanco): se evalúa como si fuera normal,
-    # igual que hace el preprocesamiento del modelo.
-    borde = np.concatenate([gris[:4].ravel(), gris[-4:].ravel(),
-                            gris[:, :4].ravel(), gris[:, -4:].ravel()])
-    if np.median(borde) > 128:
-        gris = 255 - gris
+    # Se prueba la imagen tal cual y también invertida (mamografías con
+    # fondo blanco). No basta con mirar el borde: muchas películas
+    # escaneadas tienen un marco blanco y son mamografías normales.
+    return _forma_de_mamografia(gris) or _forma_de_mamografia(255 - gris)
+
+
+def _forma_de_mamografia(gris):
+    """Mucho fondo oscuro, mama pegada a un costado y poco ruido."""
 
     fondo_oscuro = (gris < 40).mean()
 
@@ -153,8 +158,7 @@ def parece_mamografia(imagen):
     ruido = np.abs(np.diff(gris, axis=1)).mean()
 
     return (
-        color <= 8
-        and 0.15 <= fondo_oscuro <= 0.95
+        0.15 <= fondo_oscuro <= 0.95
         and asimetria >= 1.3
         and ruido <= 10
     )

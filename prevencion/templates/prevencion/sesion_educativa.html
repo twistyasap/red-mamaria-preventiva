@@ -18,6 +18,28 @@
         </div>
 
         {% if preguntas %}
+            <!-- Progreso de esta sesión (se guarda en el navegador, por usuario) -->
+            <div class="card border-0 shadow-sm mb-4" id="resumenSesion">
+                <div class="card-body p-3">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div class="flex-grow-1">
+                            <div class="small fw-semibold mb-1" id="resumenTexto">Respondidas 0 de {{ preguntas|length }}</div>
+                            <div class="progress rounded-pill" style="height: 8px;">
+                                <div class="progress-bar bg-primary rounded-pill" id="resumenBarra" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" id="btnReiniciar" hidden>
+                            &#8634; Reiniciar sesión
+                        </button>
+                    </div>
+                    <div class="alert alert-success small mt-3 mb-0" id="sesionCompleta" hidden>
+                        <strong>¡Completaste esta sesión!</strong>
+                        <span id="sesionCompletaTexto"></span>
+                        <a href="{% url 'educativo_menu' %}" class="alert-link ms-1">Volver al menú</a>
+                    </div>
+                </div>
+            </div>
+
             {% for p in preguntas %}
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-body p-4">
@@ -72,22 +94,17 @@
         {% endif %}
     </div>
 
+    {{ ids_preguntas|json_script:"ids-preguntas" }}
+    <script src="{% static 'prevencion/js/progreso_educativo.js' %}"></script>
     <script>
+        const USUARIO_ID = "{{ user.id }}";
+        const IDS_PREGUNTAS = JSON.parse(document.getElementById('ids-preguntas').textContent);
+
         // Guarda en memoria el texto original de la BD la primera vez
         function respaldarTextoOriginal(elemento) {
             if (!elemento.getAttribute('data-texto-original')) {
                 elemento.setAttribute('data-texto-original', elemento.innerText);
             }
-        }
-
-        // Guarda la selección en localStorage
-        function guardarRespuesta(idPregunta, esCorrecta, opcionSeleccionada) {
-            const respGuardadas = JSON.parse(localStorage.getItem('respuestas_usuario') || '{}');
-            respGuardadas[idPregunta] = {
-                esCorrecta: esCorrecta,
-                opcionSeleccionada: opcionSeleccionada
-            };
-            localStorage.setItem('respuestas_usuario', JSON.stringify(respGuardadas));
         }
 
         // Bloquea los botones de la pregunta una vez respondida
@@ -96,41 +113,12 @@
             botones.forEach(btn => btn.disabled = true);
         }
 
-        // Función para verificar Verdadero/Falso (Sesión 1 y 3)
-        function verificarVF(id, seleccion, respuestaCorrecta, botonClickeado) {
-            const cuadroRetro = document.getElementById('retro-' + id);
-            const titulo = document.getElementById('titulo-' + id);
-            const explicacion = document.getElementById('explicacion-' + id);
-
-            respaldarTextoOriginal(explicacion);
-            cuadroRetro.classList.remove('d-none', 'alert-success', 'alert-danger');
-
-            const esCorrecta = (seleccion === respuestaCorrecta);
-
-            if (esCorrecta) {
-                cuadroRetro.classList.add('alert-success');
-                titulo.innerText = "¡Correcto!";
-                explicacion.innerText = explicacion.getAttribute('data-texto-original');
-            } else {
-                cuadroRetro.classList.add('alert-danger');
-                titulo.innerText = "Respuesta Incorrecta";
-                explicacion.innerText = "Esa opción no es correcta para esta afirmación. Revisa nuevamente e inténtalo otra vez.";
-            }
-
-            guardarRespuesta(id, esCorrecta, seleccion.toString());
-            deshabilitarOpciones(id);
-            if (botonClickeado) botonClickeado.classList.add('active');
-        }
-
-        // Función para verificar Selección Múltiple (Sesión 2)
-        function verificarOpcion(boton) {
-            const idPregunta = boton.getAttribute('data-pregunta');
-            const opcionId = boton.getAttribute('data-opcion-id');
-            const esCorrecta = boton.getAttribute('data-correcta') === 'true';
-
+        // Muestra el cuadro de corrección de una pregunta
+        function mostrarRetroalimentacion(idPregunta, esCorrecta) {
             const cuadroRetro = document.getElementById('retro-' + idPregunta);
             const titulo = document.getElementById('titulo-' + idPregunta);
             const explicacion = document.getElementById('explicacion-' + idPregunta);
+            if (!cuadroRetro || !titulo || !explicacion) return;
 
             respaldarTextoOriginal(explicacion);
             cuadroRetro.classList.remove('d-none', 'alert-success', 'alert-danger');
@@ -142,49 +130,73 @@
             } else {
                 cuadroRetro.classList.add('alert-danger');
                 titulo.innerText = "Respuesta Incorrecta";
-                explicacion.innerText = "Esa opción NO ES CORRECTA para esta pregunta. Revisa las alternativas e inténtalo de nuevo.";
+                explicacion.innerText = "Esa opción no es correcta para esta pregunta. Puedes reiniciar la sesión para intentarlo de nuevo.";
             }
-
-            guardarRespuesta(idPregunta, esCorrecta, opcionId);
-            deshabilitarOpciones(idPregunta);
-            boton.classList.add('active');
         }
 
-        // Al recargar la página (F5) o volver a ella, se restauran los estados
-        document.addEventListener("DOMContentLoaded", function() {
-            const respGuardadas = JSON.parse(localStorage.getItem('respuestas_usuario') || '{}');
+        // Actualiza el resumen de arriba (respondidas, correctas, completada)
+        function actualizarResumen() {
+            const r = ProgresoEducativo.resumen(USUARIO_ID, IDS_PREGUNTAS);
+            document.getElementById('resumenTexto').innerText =
+                'Respondidas ' + r.respondidas + ' de ' + r.total + ' · Correctas ' + r.correctas;
+            document.getElementById('resumenBarra').style.width =
+                (r.total ? Math.round(100 * r.respondidas / r.total) : 0) + '%';
+            document.getElementById('btnReiniciar').hidden = r.respondidas === 0;
+            document.getElementById('sesionCompleta').hidden = !r.completa;
+            document.getElementById('sesionCompletaTexto').innerText =
+                'Obtuviste ' + r.correctas + ' de ' + r.total + ' respuestas correctas.';
+        }
 
-            Object.keys(respGuardadas).forEach(idPregunta => {
-                const data = respGuardadas[idPregunta];
-                const cuadroRetro = document.getElementById('retro-' + idPregunta);
-                const titulo = document.getElementById('titulo-' + idPregunta);
-                const explicacion = document.getElementById('explicacion-' + idPregunta);
+        // Verdadero/Falso (Sesión 1 y 3)
+        function verificarVF(id, seleccion, respuestaCorrecta, botonClickeado) {
+            const esCorrecta = (seleccion === respuestaCorrecta);
+            mostrarRetroalimentacion(id, esCorrecta);
+            ProgresoEducativo.guardarRespuesta(USUARIO_ID, id, esCorrecta, seleccion);
+            deshabilitarOpciones(id);
+            if (botonClickeado) botonClickeado.classList.add('active');
+            actualizarResumen();
+        }
 
-                if (cuadroRetro && titulo && explicacion) {
-                    respaldarTextoOriginal(explicacion);
-                    cuadroRetro.classList.remove('d-none', 'alert-success', 'alert-danger');
+        // Selección múltiple (Sesión 2)
+        function verificarOpcion(boton) {
+            const idPregunta = boton.getAttribute('data-pregunta');
+            const esCorrecta = boton.getAttribute('data-correcta') === 'true';
+            mostrarRetroalimentacion(idPregunta, esCorrecta);
+            ProgresoEducativo.guardarRespuesta(USUARIO_ID, idPregunta, esCorrecta, boton.getAttribute('data-opcion-id'));
+            deshabilitarOpciones(idPregunta);
+            boton.classList.add('active');
+            actualizarResumen();
+        }
 
-                    if (data.esCorrecta) {
-                        cuadroRetro.classList.add('alert-success');
-                        titulo.innerText = "¡Respuesta Correcta!";
-                        explicacion.innerText = explicacion.getAttribute('data-texto-original');
-                    } else {
-                        cuadroRetro.classList.add('alert-danger');
-                        titulo.innerText = "Respuesta Incorrecta";
-                        explicacion.innerText = "Esa opción NO ES CORRECTA para esta pregunta. Ya seleccionaste una respuesta previa.";
+        // Al recargar la página o volver a ella, se restauran las respuestas
+        document.addEventListener("DOMContentLoaded", function () {
+            const guardadas = ProgresoEducativo.leer(USUARIO_ID);
+
+            IDS_PREGUNTAS.forEach(function (idPregunta) {
+                const data = guardadas[String(idPregunta)];
+                if (!data) return;
+
+                mostrarRetroalimentacion(idPregunta, data.esCorrecta);
+                document.querySelectorAll('.btn-opcion-' + idPregunta).forEach(btn => {
+                    btn.disabled = true;
+                    if (btn.getAttribute('data-opcion-id') === data.opcionSeleccionada ||
+                        btn.getAttribute('data-valor') === data.opcionSeleccionada) {
+                        btn.classList.add('active');
                     }
-
-                    // Marca la opción elegida y deshabilita todos los botones de esa pregunta
-                    const botones = document.querySelectorAll('.btn-opcion-' + idPregunta);
-                    botones.forEach(btn => {
-                        btn.disabled = true;
-                        if (btn.getAttribute('data-opcion-id') === data.opcionSeleccionada || 
-                            btn.getAttribute('data-valor') === data.opcionSeleccionada) {
-                            btn.classList.add('active');
-                        }
-                    });
-                }
+                });
             });
+
+            // Reiniciar: borra las respuestas de ESTA sesión para volver a responderla
+            const btnReiniciar = document.getElementById('btnReiniciar');
+            if (btnReiniciar) {
+                btnReiniciar.addEventListener('click', function () {
+                    if (confirm('¿Quieres borrar tus respuestas de esta sesión y volver a responderla?')) {
+                        ProgresoEducativo.reiniciar(USUARIO_ID, IDS_PREGUNTAS);
+                        window.location.reload();
+                    }
+                });
+                actualizarResumen();
+            }
         });
     </script>
     <script src="{% static 'prevencion/js/animaciones.js' %}"></script>

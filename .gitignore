@@ -10,3 +10,6 @@ modelo_cnn*/*.zip
 modelo_cnn*/onnx/*.onnx
 modelo_cnn*/onnx/*.keras
 modelo_cnn*/onnx/*.npy
+
+# Imágenes de ejemplo para presentar (dataset público, no hacen falta en el repositorio)
+demo_presentacion/

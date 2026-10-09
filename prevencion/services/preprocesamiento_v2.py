@@ -83,8 +83,11 @@ def preparar_imagen(imagen):
     # Imagen PIL -> uint8 (IMG_H, IMG_W) lista para el modelo
     a = redimensionar(a_gris(imagen), BASE, BASE)
 
-    borde = np.concatenate([a[:8].ravel(), a[-8:].ravel(), a[:, :8].ravel(), a[:, -8:].ravel()])
-    if np.median(borde) > 0.5:          # fondo claro = imagen invertida
+    # Imagen invertida (fondo blanco): se invierte solo si así tiene claramente
+    # más fondo negro. (El notebook miraba solo el borde, pero muchas películas
+    # escaneadas tienen un marco blanco y no están invertidas. En RSNA, con
+    # fondo negro, ambos criterios dan lo mismo: el modelo no cambia.)
+    if (a < 0.15).mean() < (a > 0.85).mean():
         a = 1.0 - a
 
     mitad = BASE // 2

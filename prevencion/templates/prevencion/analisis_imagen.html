@@ -51,10 +51,6 @@
             <div class="row g-4 align-items-start">
                 <div class="col-md-5 text-center">
                     <img src="{{ resultado.mapa_calor }}" alt="Mapa de calor sobre la mama recortada" class="mapa-calor">
-                    <p class="text-muted small mt-2 mb-0">
-                        La mama tal como la analizó el modelo (recortada y sin etiquetas).
-                        En rojo, las zonas que <strong>más influyeron</strong>; no indica necesariamente dónde hay una lesión.
-                    </p>
                 </div>
 
                 <div class="col-md-7">
@@ -94,13 +90,20 @@
                         CESFAM o centro de salud.
                     </div>
 
-                    <div class="d-flex flex-wrap gap-2">
-                        <a href="{% url 'asistente_virtual' %}" class="btn btn-medtech btn-sm px-3">
-                            <i class="bi bi-robot me-1"></i> Pregúntale a Sonia
-                        </a>
-                        <a href="{% url 'analisis_imagen' %}" class="btn btn-outline-secondary btn-sm px-3">
-                            <i class="bi bi-arrow-repeat me-1"></i> Analizar otra imagen
-                        </a>
+                    <!-- Botones lado a lado, del mismo ancho -->
+                    <div class="row g-2 acciones-resultado">
+                        <div class="col-6">
+                            <a href="{% url 'asistente_virtual' %}" class="btn btn-medtech w-100"
+                               style="padding: 0.6rem 0.5rem !important; font-size: 0.88rem !important; white-space: nowrap;">
+                                <i class="bi bi-robot me-1"></i> Pregúntale a Sonia
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'analisis_imagen' %}" class="btn btn-outline-secondary w-100"
+                               style="padding: 0.6rem 0.5rem !important; font-size: 0.88rem !important; white-space: nowrap;">
+                                <i class="bi bi-arrow-repeat me-1"></i> Analizar otra imagen
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

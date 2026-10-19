@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="/media/imagenes_mamarias/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=21">
+    <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=24">
 </head>
 <body class="py-5">
     <div class="container" style="max-width: 900px;">
@@ -30,10 +30,17 @@
                 </a>
             </div>
             
-            <a href="{% url 'cerrar_sesion' %}" class="btn btn-outline-danger btn-sm px-3 flex-shrink-0" aria-label="Cerrar sesión">
-                <i class="bi bi-box-arrow-right"></i>
-                <span class="d-none d-sm-inline ms-1">Cerrar Sesión</span>
-            </a>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                <!-- Volver a la página principal (la sesión sigue abierta) -->
+                <a href="{% url 'landing' %}" class="btn btn-outline-secondary btn-sm px-3" aria-label="Página principal">
+                    <i class="bi bi-house-door"></i>
+                    <span class="d-none d-sm-inline ms-1">Página principal</span>
+                </a>
+                <a href="{% url 'cerrar_sesion' %}" class="btn btn-salir btn-sm px-3" aria-label="Cerrar sesión">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="d-none d-sm-inline ms-1">Cerrar Sesión</span>
+                </a>
+            </div>
         </div>
 
         <!-- Encabezado Principal -->
@@ -52,7 +59,7 @@
         <!-- Módulos principales -->
         <div class="row g-3 g-md-4 justify-content-center">
 
-            <div class="col-12 col-md-5">
+            <div class="col-12 col-md-6 col-lg-4">
                 <div class="card-session modulo-card p-4 h-100">
                     <div class="modulo-icono"><i class="bi bi-journal-bookmark-fill"></i></div>
                     <div class="modulo-texto">
@@ -65,7 +72,7 @@
                 </div>
             </div>
 
-            <div class="col-12 col-md-5">
+            <div class="col-12 col-md-6 col-lg-4">
                 <div class="card-session modulo-card p-4 h-100">
                     <div class="modulo-icono"><i class="bi bi-file-earmark-medical-fill"></i></div>
                     <div class="modulo-texto">
@@ -78,6 +85,24 @@
                 </div>
             </div>
 
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card-session modulo-card p-4 h-100">
+                    <div class="modulo-icono"><i class="bi bi-hand-index-thumb-fill"></i></div>
+                    <div class="modulo-texto">
+                        <h5 class="fw-bold">Guía de Autoexamen</h5>
+                        <p class="text-muted small">Aprende a revisar tus mamas en 4 pasos y conoce dónde pedir ayuda.</p>
+                    </div>
+                    <button type="button" class="btn btn-medtech w-100 modulo-btn" id="abrirGuiaBtn">
+                        Ver guía <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Número de ayuda -->
+        <div class="mt-4">
+            {% include "prevencion/_salud_responde.html" %}
         </div>
 
         <!-- Mapa de centros de salud -->
@@ -118,6 +143,106 @@
             </form>
         </div>
     </div>
+
+    <!-- Ventana con la guía de autoexamen y los números de ayuda -->
+    <div id="modalGuia" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tituloGuia" hidden>
+        <div class="modal-card modal-bienvenida">
+            <button type="button" class="modal-x-btn" data-cerrar-guia aria-label="Cerrar">&times;</button>
+
+            <div class="bienvenida-icono mb-2"><i class="bi bi-hand-index-thumb-fill"></i></div>
+            <h2 class="modal-title" id="tituloGuia">Autoexamen en 4 pasos</h2>
+            <p class="guia-frecuencia">
+                <i class="bi bi-calendar-heart"></i>
+                Hazlo una vez al mes.
+            </p>
+
+            <ol class="bienvenida-lista guia-pasos">
+                <li>
+                    <i class="bi bi-eye-fill"></i>
+                    <div>
+                        <strong>1. Mira frente al espejo</strong>
+                        <span>Con los brazos abajo y luego arriba, observa si hay cambios de forma, tamaño o en la piel (hundimientos, enrojecimiento).</span>
+                    </div>
+                </li>
+                <li>
+                    <i class="bi bi-person-standing"></i>
+                    <div>
+                        <strong>2. Palpa de pie</strong>
+                        <span>Con las yemas de los dedos, haz círculos pequeños por toda la mama y la axila. Es fácil en la ducha, con la piel jabonosa.</span>
+                    </div>
+                </li>
+                <li>
+                    <i class="bi bi-hand-index"></i>
+                    <div>
+                        <strong>3. Palpa acostada</strong>
+                        <span>Con una almohada bajo el hombro, revisa cada mama con la mano contraria, de afuera hacia el pezón.</span>
+                    </div>
+                </li>
+                <li>
+                    <i class="bi bi-droplet-half"></i>
+                    <div>
+                        <strong>4. Revisa el pezón</strong>
+                        <span>Fíjate si se hunde, cambia de dirección o sale líquido, sobre todo si tiene sangre.</span>
+                    </div>
+                </li>
+            </ol>
+
+            <div class="bienvenida-aviso">
+                <i class="bi bi-info-circle-fill"></i>
+                Si notas algún cambio, no esperes: pide una evaluación en tu centro de salud. La mayoría de los bultos no son cáncer, pero siempre deben revisarse.
+            </div>
+
+            <div class="guia-ayuda">
+                <h6 class="fw-bold mb-2"><i class="bi bi-telephone-fill me-1"></i> ¿Necesitas ayuda?</h6>
+                <a href="tel:6003607777" class="guia-ayuda-item">
+                    <i class="bi bi-headset"></i>
+                    <div>
+                        <strong>Salud Responde: 600 360 7777</strong>
+                        <span>Orientación en salud gratuita, las 24 horas.</span>
+                    </div>
+                </a>
+                <a href="https://www.superdesalud.gob.cl/orientacion-en-salud/garantias-explicitas-en-salud-ges/" target="_blank" rel="noopener" class="guia-ayuda-item">
+                    <i class="bi bi-shield-plus"></i>
+                    <div>
+                        <strong>Cáncer de mama en el GES</strong>
+                        <span>Conoce tus garantías en la Superintendencia de Salud.</span>
+                    </div>
+                </a>
+            </div>
+
+            <button type="button" class="btn-entendido mb-0" data-cerrar-guia>Entendido</button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const modal = document.getElementById("modalGuia");
+
+            function abrirGuia() {
+                modal.hidden = false;
+                document.addEventListener("keydown", cerrarConEscape);
+            }
+
+            function cerrarGuia() {
+                modal.hidden = true;
+                document.removeEventListener("keydown", cerrarConEscape);
+            }
+
+            function cerrarConEscape(e) {
+                if (e.key === "Escape") cerrarGuia();
+            }
+
+            document.getElementById("abrirGuiaBtn").addEventListener("click", abrirGuia);
+            modal.querySelectorAll("[data-cerrar-guia]").forEach(function (boton) {
+                boton.addEventListener("click", cerrarGuia);
+            });
+
+            // Cerrar al hacer clic fuera del recuadro blanco
+            modal.addEventListener("click", function (e) {
+                if (e.target === modal) cerrarGuia();
+            });
+        })();
+    </script>
 
     {% if bienvenida %}
     <!-- Pop-up de bienvenida (solo después de iniciar sesión o registrarse) -->

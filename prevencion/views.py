@@ -164,6 +164,10 @@ def registro_usuario(request):
 
 def iniciar_sesion(request):
 
+    # Si ya tiene la sesión abierta, no le pedimos las credenciales de nuevo
+    if request.user.is_authenticated:
+        return redirect('inicio')
+
     if request.method == 'POST':
 
         usuario = (request.POST.get('username') or '').strip()

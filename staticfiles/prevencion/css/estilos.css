@@ -876,7 +876,8 @@ input:-webkit-autofill:focus {
         font-size: 16px !important;
     }
 
-    .container { padding-left: 0; padding-right: 0; }
+    /* Margen a los lados para que nada quede pegado al borde de la pantalla */
+    .container { padding-left: 1rem; padding-right: 1rem; }
 
     .card-session { border-radius: 18px !important; }
     .card-session.p-4 { padding: 1.1rem !important; }

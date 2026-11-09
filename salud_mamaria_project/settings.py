@@ -108,6 +108,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        # Primera letra mayúscula y al menos un número
+        'NAME': 'prevencion.validators.ValidadorClaveSegura',
+    },
 ]
 
 

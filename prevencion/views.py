@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.password_validation import validate_password
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -127,6 +128,23 @@ def registro_usuario(request):
                 request,
                 'El nombre de usuario ya existe. Intenta con otro.'
             )
+            return render(
+                request,
+                'prevencion/registro.html',
+                contexto
+            )
+
+        # Requisitos de la contraseña (mín. 8 caracteres, primera
+        # mayúscula, un número, no demasiado común) definidos en
+        # AUTH_PASSWORD_VALIDATORS de settings.py
+        try:
+            validate_password(
+                clave,
+                user=User(username=usuario, email=correo)
+            )
+        except ValidationError as error:
+            for mensaje in error.messages:
+                messages.error(request, mensaje)
             return render(
                 request,
                 'prevencion/registro.html',

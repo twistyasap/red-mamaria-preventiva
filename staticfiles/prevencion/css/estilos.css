@@ -211,6 +211,22 @@ h1, h2, h3, h4, h5, h6 {
     transform: translateY(-2px);
 }
 
+/* Botón "Cerrar Sesión": rosado suave, se rellena al pasar el mouse */
+.btn-salir {
+    color: #be185d !important;
+    background-color: #fdf2f8 !important;
+    border: 1.5px solid #fbcfe8 !important;
+}
+
+.btn-salir:hover,
+.btn-salir:focus-visible {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%) !important;
+    border-color: transparent !important;
+    box-shadow: 0 6px 16px rgba(219, 39, 119, 0.25);
+    transform: translateY(-2px);
+}
+
 /* ===================================================
    MODAL / POP-UP MEJORADO
    =================================================== */
@@ -578,6 +594,112 @@ h1, h2, h3, h4, h5, h6 {
     line-height: 1.45;
 }
 
+/* Franja de Salud Responde (panel y página principal) */
+.salud-responde {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 16px 20px;
+    background: #ffffff;
+    border: 1.5px solid #fbcfe8;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(219, 39, 119, 0.08);
+}
+
+.salud-responde-icono {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    font-size: 1.4rem;
+    color: #db2777;
+    background: #fdf2f8;
+    border-radius: 50%;
+}
+
+.salud-responde-texto {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.salud-responde-texto strong {
+    display: block;
+    color: #1e1633;
+}
+
+.salud-responde-texto span {
+    color: #4a4458;
+    font-size: 0.9rem;
+}
+
+.salud-responde-texto b { color: #be185d; }
+
+.salud-responde-btn { flex-shrink: 0; }
+
+@media (max-width: 576px) {
+    .salud-responde { flex-wrap: wrap; padding: 14px 16px; }
+    .salud-responde-texto { width: calc(100% - 60px); }
+    .salud-responde-btn { width: 100%; }
+}
+
+/* Guía de autoexamen (ventana del panel) */
+.guia-frecuencia {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    margin: 0 0 16px;
+    padding: 6px 14px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #be185d;
+    background: #fdf2f8;
+    border-radius: 50px;
+}
+
+.guia-pasos li > i { color: #db2777; }
+
+.guia-ayuda {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.guia-ayuda h6 { color: #1e1633; font-size: 15px; }
+
+.guia-ayuda-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border: 1.5px solid #ede9fe;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.guia-ayuda-item:hover {
+    border-color: #c4b5fd;
+    background: #f8f5fe;
+}
+
+.guia-ayuda-item > i {
+    font-size: 22px;
+    color: #7c3aed;
+}
+
+.guia-ayuda-item strong {
+    display: block;
+    color: #1e1633;
+    font-size: 14.5px;
+}
+
+.guia-ayuda-item span {
+    color: #4a4458;
+    font-size: 13px;
+}
+
 .bienvenida-aviso {
     display: flex;
     gap: 8px;
@@ -939,3 +1061,75 @@ input:-webkit-autofill:focus {
     .modal-card { padding: 32px 20px 24px; }
     .modal-title { font-size: 22px; }
 }
+
+/* ===================================================
+   ALTERNATIVAS / BOTONES "PRIMARY" EN MORADO
+   (Bootstrap los trae en azul por defecto)
+   =================================================== */
+.btn-outline-primary {
+    --bs-btn-color: #7c3aed;
+    --bs-btn-border-color: #c9a7f5;
+    --bs-btn-bg: #ffffff;
+    --bs-btn-hover-color: #5b21b6;
+    --bs-btn-hover-bg: #f3ebfe;
+    --bs-btn-hover-border-color: #8b5cf6;
+    --bs-btn-focus-shadow-rgb: 139, 92, 246;
+    --bs-btn-active-color: #ffffff;
+    --bs-btn-active-bg: #7c3aed;
+    --bs-btn-active-border-color: #7c3aed;
+    --bs-btn-disabled-color: #7c3aed;
+    --bs-btn-disabled-bg: #ffffff;
+    --bs-btn-disabled-border-color: #e0ccfa;
+}
+
+/* Alternativa elegida: relleno con el degradado de la marca */
+.btn-outline-primary.active,
+.btn-outline-primary:active,
+.btn-check:checked + .btn-outline-primary {
+    background: var(--gradient-brand) !important;
+    border-color: #7c3aed !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25) !important;
+}
+
+/* Tras responder, la elegida se mantiene nítida y el resto se atenúa */
+.btn-outline-primary:disabled.active,
+.btn-outline-primary.disabled.active { opacity: 1 !important; }
+
+.btn:focus-visible {
+    box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.3) !important;
+}
+
+/* Radios, checks y switches en morado */
+.form-check-input:checked {
+    background-color: #7c3aed;
+    border-color: #7c3aed;
+}
+.form-check-input:focus {
+    border-color: #c9a7f5;
+    box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.25);
+}
+
+/* ===================================================
+   REQUISITOS DE CONTRASEÑA (registro)
+   =================================================== */
+.requisitos-clave {
+    list-style: none;
+    margin: 0.6rem 0 0;
+    padding: 0.65rem 0.85rem;
+    background: var(--purple-50);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.82rem;
+}
+.requisitos-clave li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text-muted);
+    padding: 0.12rem 0;
+    transition: color 0.25s ease;
+}
+.requisitos-clave li i { color: var(--purple-300); transition: color 0.25s ease, transform 0.25s ease; }
+.requisitos-clave li.cumple { color: #15803d; }
+.requisitos-clave li.cumple i { color: #16a34a; transform: scale(1.15); }

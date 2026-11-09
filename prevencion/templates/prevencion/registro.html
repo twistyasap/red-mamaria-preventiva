@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="/media/imagenes_mamarias/favicon.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=24">
+    <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=26">
     <link rel="stylesheet" href="{% static 'prevencion/css/movimiento.css' %}?v=1">
 
     <style>
@@ -142,11 +142,18 @@
                     <label for="password" class="form-label fw-medium text-dark small">Contraseña</label>
                     <div class="input-group position-relative">
                         <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-lock"></i></span>
-                        <input type="password" name="password" id="password" class="form-control border-start-0 ps-0 pe-5" placeholder="••••••••" required data-nombre="Contraseña" autocomplete="new-password">
+                        <input type="password" name="password" id="password" class="form-control border-start-0 ps-0 pe-5" placeholder="Ej: Maria2024" required data-nombre="Contraseña" data-requisitos="requisitos-clave" autocomplete="new-password" aria-describedby="requisitos-clave">
                         <span onclick="togglePassword('password', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: #74638d; padding: 4px;">
                             <i class="bi bi-eye-slash fs-6"></i>
                         </span>
                     </div>
+
+                    <!-- Requisitos: se marcan en verde mientras se escribe -->
+                    <ul id="requisitos-clave" class="requisitos-clave" aria-live="polite">
+                        <li data-regla="largo"><i class="bi bi-circle"></i> Mínimo 8 caracteres</li>
+                        <li data-regla="mayuscula"><i class="bi bi-circle"></i> La primera letra en mayúscula</li>
+                        <li data-regla="numero"><i class="bi bi-circle"></i> Al menos un número</li>
+                    </ul>
                 </div>
 
                 <!-- Botón de Envío -->
@@ -184,7 +191,7 @@
     </script>
 
     <script src="{% static 'prevencion/js/animaciones.js' %}"></script>
-    <script src="{% static 'prevencion/js/validacion_formularios.js' %}"></script>
+    <script src="{% static 'prevencion/js/validacion_formularios.js' %}?v=2"></script>
     <script src="{% static 'prevencion/js/movimiento.js' %}?v=1" defer></script>
 </body>
 </html>

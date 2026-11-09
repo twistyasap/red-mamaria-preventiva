@@ -60,8 +60,45 @@ document.addEventListener("DOMContentLoaded", function () {
             return "El correo no tiene un formato válido (ej: nombre@correo.com).";
         }
 
+        if (campo.dataset.requisitos) {
+            const pendientes = REGLAS_CLAVE.filter(function (r) { return !r.cumple(campo.value); });
+            if (pendientes.length) {
+                return "La contraseña no cumple: " +
+                    pendientes.map(function (r) { return r.texto; }).join(", ") + ".";
+            }
+        }
+
         return null;
     }
+
+    /* ---- Requisitos de contraseña (iguales a prevencion/validators.py) ---- */
+    const REGLAS_CLAVE = [
+        { id: "largo",     texto: "mínimo 8 caracteres",
+          cumple: function (v) { return v.length >= 8; } },
+        { id: "mayuscula", texto: "la primera letra en mayúscula",
+          cumple: function (v) { return v.length > 0 && v[0] !== v[0].toLowerCase() && v[0] === v[0].toUpperCase(); } },
+        { id: "numero",    texto: "al menos un número",
+          cumple: function (v) { return /\d/.test(v); } }
+    ];
+
+    document.querySelectorAll("[data-requisitos]").forEach(function (campo) {
+        const lista = document.getElementById(campo.dataset.requisitos);
+        if (!lista) return;
+
+        function actualizar() {
+            REGLAS_CLAVE.forEach(function (regla) {
+                const item = lista.querySelector('[data-regla="' + regla.id + '"]');
+                if (!item) return;
+                const ok = regla.cumple(campo.value);
+                item.classList.toggle("cumple", ok);
+                const icono = item.querySelector("i");
+                icono.className = ok ? "bi bi-check-circle-fill" : "bi bi-circle";
+            });
+        }
+
+        campo.addEventListener("input", actualizar);
+        actualizar();
+    });
 
     // El mensaje va debajo del campo, o debajo del grupo con ícono si lo tiene
     function contenedorDe(campo) {

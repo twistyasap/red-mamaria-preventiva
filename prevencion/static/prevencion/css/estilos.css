@@ -1061,3 +1061,75 @@ input:-webkit-autofill:focus {
     .modal-card { padding: 32px 20px 24px; }
     .modal-title { font-size: 22px; }
 }
+
+/* ===================================================
+   ALTERNATIVAS / BOTONES "PRIMARY" EN MORADO
+   (Bootstrap los trae en azul por defecto)
+   =================================================== */
+.btn-outline-primary {
+    --bs-btn-color: #7c3aed;
+    --bs-btn-border-color: #c9a7f5;
+    --bs-btn-bg: #ffffff;
+    --bs-btn-hover-color: #5b21b6;
+    --bs-btn-hover-bg: #f3ebfe;
+    --bs-btn-hover-border-color: #8b5cf6;
+    --bs-btn-focus-shadow-rgb: 139, 92, 246;
+    --bs-btn-active-color: #ffffff;
+    --bs-btn-active-bg: #7c3aed;
+    --bs-btn-active-border-color: #7c3aed;
+    --bs-btn-disabled-color: #7c3aed;
+    --bs-btn-disabled-bg: #ffffff;
+    --bs-btn-disabled-border-color: #e0ccfa;
+}
+
+/* Alternativa elegida: relleno con el degradado de la marca */
+.btn-outline-primary.active,
+.btn-outline-primary:active,
+.btn-check:checked + .btn-outline-primary {
+    background: var(--gradient-brand) !important;
+    border-color: #7c3aed !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25) !important;
+}
+
+/* Tras responder, la elegida se mantiene nítida y el resto se atenúa */
+.btn-outline-primary:disabled.active,
+.btn-outline-primary.disabled.active { opacity: 1 !important; }
+
+.btn:focus-visible {
+    box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.3) !important;
+}
+
+/* Radios, checks y switches en morado */
+.form-check-input:checked {
+    background-color: #7c3aed;
+    border-color: #7c3aed;
+}
+.form-check-input:focus {
+    border-color: #c9a7f5;
+    box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.25);
+}
+
+/* ===================================================
+   REQUISITOS DE CONTRASEÑA (registro)
+   =================================================== */
+.requisitos-clave {
+    list-style: none;
+    margin: 0.6rem 0 0;
+    padding: 0.65rem 0.85rem;
+    background: var(--purple-50);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.82rem;
+}
+.requisitos-clave li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text-muted);
+    padding: 0.12rem 0;
+    transition: color 0.25s ease;
+}
+.requisitos-clave li i { color: var(--purple-300); transition: color 0.25s ease, transform 0.25s ease; }
+.requisitos-clave li.cumple { color: #15803d; }
+.requisitos-clave li.cumple i { color: #16a34a; transform: scale(1.15); }

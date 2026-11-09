@@ -1,0 +1,312 @@
+/* ===================================================
+   MOVIMIENTO GLOBAL — fondo animado, transiciones y
+   apariciones al hacer scroll. Red Mamaria Preventiva
+
+   Regla de rendimiento: solo se anima transform y opacity
+   (los únicos que el navegador mueve en la GPU sin
+   recalcular la página), y todo se pausa si la pestaña
+   no está visible o la persona pide "reducir movimiento".
+   =================================================== */
+
+/* ---------- 1. Capa del fondo ---------- */
+#rm-fondo {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+    contain: strict;
+}
+
+.rm-lazos {
+    position: absolute;
+    inset: 0;
+    will-change: transform;
+}
+
+/* Lazos grandes anclados */
+.rm-ancla {
+    position: absolute;
+    height: auto;
+    will-change: transform;
+    animation: rm-flotar 9s ease-in-out infinite alternate;
+}
+.rm-ancla-1 { width: 150px; top: 9%;  left: 3%;  color: #a78bfa; opacity: .16; --r0: -14deg; --r1: -4deg; }
+.rm-ancla-2 { width: 120px; top: 38%; right: 4%; color: #8b5cf6; opacity: .13; --r0: 10deg;  --r1: 20deg; animation-duration: 11s; animation-delay: -4s; }
+.rm-ancla-3 { width: 95px;  top: 64%; left: 10%; color: #c084fc; opacity: .14; --r0: 4deg;   --r1: -8deg; animation-duration: 13s; animation-delay: -7s; }
+
+@keyframes rm-flotar {
+    from { transform: translate3d(0, 0, 0) rotate(var(--r0, -8deg)) scale(1); }
+    to   { transform: translate3d(0, -28px, 0) rotate(var(--r1, 6deg)) scale(1.05); }
+}
+
+/* Lazos pequeños que suben */
+.rm-sube {
+    position: absolute;
+    left: var(--x);
+    bottom: -60px;
+    width: var(--s);
+    color: var(--c);
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: rm-subir var(--t) linear var(--dl) infinite;
+}
+.rm-mece {
+    display: block;
+    width: 100%;
+    height: auto;
+    animation: rm-mecer 4.5s ease-in-out infinite alternate;
+}
+
+@keyframes rm-subir {
+    0%   { transform: translate3d(0, 0, 0);       opacity: 0; }
+    10%  { opacity: .32; }
+    80%  { opacity: .22; }
+    100% { transform: translate3d(0, -115vh, 0);  opacity: 0; }
+}
+@keyframes rm-mecer {
+    from { transform: translate3d(-18px, 0, 0) rotate(-14deg); }
+    to   { transform: translate3d(18px, 0, 0)  rotate(14deg); }
+}
+
+/* Burbujas */
+.rm-burbujas span {
+    position: absolute;
+    left: var(--x);
+    bottom: 40px;
+    width: var(--s);
+    height: var(--s);
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff 0%, #c4b5fd 55%, #a78bfa 100%);
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: rm-burbuja var(--t) ease-in var(--dl) infinite;
+}
+@keyframes rm-burbuja {
+    0%   { transform: translate3d(0, 0, 0) scale(.6); opacity: 0; }
+    15%  { opacity: .45; }
+    100% { transform: translate3d(24px, -70vh, 0) scale(1.1); opacity: 0; }
+}
+
+/* Olas: cada SVG mide el doble del ancho y se desplaza
+   la mitad, así el dibujo empalma sin cortes. */
+.rm-olas {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+}
+.rm-olas-abajo { bottom: 0; animation: rm-respirar 7s ease-in-out infinite alternate; }
+.rm-olas-arriba { top: 0; height: 90px; transform: scaleY(-1); }
+
+.rm-ola {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+    will-change: transform;
+    animation: rm-ola 22s linear infinite;
+}
+.rm-ola-1 { fill: #c4b5fd; opacity: .30; animation-duration: 26s; }
+.rm-ola-2 { fill: #a78bfa; opacity: .22; animation-duration: 18s; animation-direction: reverse; height: 85%; }
+.rm-ola-3 { fill: #8b5cf6; opacity: .16; animation-duration: 13s; height: 65%; }
+.rm-ola-4 { fill: #c4b5fd; opacity: .18; animation-duration: 34s; }
+
+@keyframes rm-ola {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes rm-respirar {
+    from { transform: translate3d(0, 8px, 0); }
+    to   { transform: translate3d(0, -6px, 0); }
+}
+
+/* Pausa total cuando la pestaña está oculta */
+html.rm-pausa #rm-fondo *,
+html.rm-pausa #rm-fondo { animation-play-state: paused !important; }
+
+/* ---------- 2. Transición entre páginas ---------- */
+.rm-transicion {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #fbf7ff 0%, #f3e8ff 45%, #e9d5ff 100%);
+    pointer-events: none;
+    color: #8b5cf6;
+    animation: rm-cortina-sale .45s cubic-bezier(.4, 0, .2, 1) .18s both;
+}
+.rm-transicion-lazo {
+    width: 64px;
+    height: auto;
+    animation: rm-latido 1s ease-in-out infinite;
+}
+@keyframes rm-cortina-sale {
+    from { opacity: 1; visibility: visible; }
+    to   { opacity: 0; visibility: hidden; }
+}
+@keyframes rm-cortina-entra {
+    from { opacity: 0; visibility: visible; }
+    to   { opacity: 1; visibility: visible; }
+}
+@keyframes rm-latido {
+    0%, 100% { transform: scale(1) rotate(0); }
+    50%      { transform: scale(1.12) rotate(-4deg); }
+}
+
+/* Al salir de la página: aparece la cortina con el lazo */
+body.page-leaving { animation: none !important; }
+body.page-leaving .rm-transicion {
+    animation: rm-cortina-entra .28s ease forwards;
+}
+
+/* Contenido entrando al cargar (solo opacidad para no
+   romper elementos con position: fixed) */
+body > :not(#rm-fondo):not(.rm-transicion):not(script):not(style):not(link) {
+    animation: rm-entrar-pagina .55s ease .2s backwards;
+}
+@keyframes rm-entrar-pagina {
+    from { opacity: 0; }
+}
+
+/* ---------- 3. Apariciones al hacer scroll ---------- */
+.rm-rev {
+    opacity: 0;
+    transition:
+        opacity .7s cubic-bezier(.22, 1, .36, 1),
+        transform .8s cubic-bezier(.22, 1, .36, 1);
+}
+.rm-rev.rm-arriba    { transform: translate3d(0, 34px, 0); }
+.rm-rev.rm-izquierda { transform: translate3d(-42px, 0, 0); }
+.rm-rev.rm-derecha   { transform: translate3d(42px, 0, 0); }
+.rm-rev.rm-zoom      { transform: scale(.92); }
+.rm-rev.rm-giro      { transform: perspective(800px) rotateX(14deg) translate3d(0, 30px, 0); transform-origin: 50% 100%; }
+
+.rm-rev.rm-visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* ---------- 4. Barra de progreso de lectura ---------- */
+.rm-progreso {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    z-index: 100000;
+    background: linear-gradient(90deg, #c084fc, #8b5cf6, #ec4899);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    pointer-events: none;
+    will-change: transform;
+}
+
+/* ---------- 5. Botón volver arriba ---------- */
+.rm-arriba-btn {
+    position: fixed;
+    left: 18px;
+    bottom: 18px;
+    z-index: 9990;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    box-shadow: 0 10px 24px rgba(124, 58, 237, .3);
+    opacity: 0;
+    transform: translate3d(0, 20px, 0) scale(.8);
+    pointer-events: none;
+    transition: opacity .35s ease, transform .35s cubic-bezier(.34, 1.56, .64, 1);
+}
+.rm-arriba-btn.rm-mostrar {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+}
+.rm-arriba-btn:hover { transform: translate3d(0, -3px, 0); }
+.rm-arriba-btn svg { width: 20px; height: 20px; }
+
+/* ---------- 6. Onda al pulsar botones ---------- */
+.rm-onda-host { position: relative; overflow: hidden; isolation: isolate; }
+.rm-onda {
+    position: absolute;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: .28;
+    transform: scale(0);
+    pointer-events: none;
+    z-index: -1;
+    animation: rm-onda .6s ease-out forwards;
+}
+@keyframes rm-onda {
+    to { transform: scale(1); opacity: 0; }
+}
+
+/* ---------- 7. Micro-animaciones en hover ---------- */
+.card:hover .bi,
+.card-session:hover .bi {
+    animation: rm-saltito .6s ease;
+}
+.btn .bi { transition: transform .25s ease; }
+.btn:hover .bi-arrow-right,
+.btn:hover .bi-chevron-right,
+.btn:hover .bi-box-arrow-right { transform: translateX(4px); }
+.btn:hover .bi-arrow-left,
+.btn:hover .bi-chevron-left { transform: translateX(-4px); }
+
+@keyframes rm-saltito {
+    0%, 100% { transform: translateY(0); }
+    40%      { transform: translateY(-5px) scale(1.08); }
+    70%      { transform: translateY(1px); }
+}
+
+/* Título principal con brillo que pasa */
+.rm-brillo {
+    background: linear-gradient(100deg, currentColor 40%, #a78bfa 50%, currentColor 60%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rm-brillo 6s ease-in-out 1.2s infinite;
+}
+@keyframes rm-brillo {
+    0%, 60% { background-position: 100% 0; }
+    100%    { background-position: -50% 0; }
+}
+
+/* ---------- 8. Celular y equipos modestos ---------- */
+@media (max-width: 768px) {
+    .rm-ancla-1 { width: 90px; }
+    .rm-ancla-2 { width: 70px; }
+    .rm-ancla-3 { display: none; }
+    .rm-sube:nth-child(n+8),
+    .rm-burbujas span:nth-child(n+5) { display: none; }
+    .rm-olas { height: 90px; }
+    .rm-olas-arriba { height: 55px; }
+    .rm-arriba-btn { width: 40px; height: 40px; left: 12px; bottom: 12px; }
+}
+
+/* Modo liviano (lo activa el JS en equipos con pocos recursos) */
+html.rm-liviano .rm-burbujas,
+html.rm-liviano .rm-ola-3,
+html.rm-liviano .rm-olas-arriba,
+html.rm-liviano .rm-sube:nth-child(n+7) { display: none; }
+
+/* ---------- 9. Accesibilidad: reducir movimiento ---------- */
+@media (prefers-reduced-motion: reduce) {
+    #rm-fondo *,
+    .rm-transicion,
+    body > * { animation: none !important; }
+    .rm-transicion { display: none; }
+    .rm-sube, .rm-burbujas { display: none; }
+    .rm-rev { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .rm-brillo { animation: none; -webkit-text-fill-color: currentColor; background: none; }
+}

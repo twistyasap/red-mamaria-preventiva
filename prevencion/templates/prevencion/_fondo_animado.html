@@ -1,0 +1,66 @@
+{% comment %}
+    Fondo animado global: lazos rosados (en morado) flotando y olas.
+    Se incluye justo después de <body> en todas las páginas:
+    {% include "prevencion/_fondo_animado.html" %}
+    Solo usa transform/opacity para que la GPU lo anime sin trabas.
+{% endcomment %}
+<div class="rm-transicion" aria-hidden="true">
+    <svg class="rm-transicion-lazo" viewBox="0 -4 100 146" width="76" height="110"><use href="#rm-lazo"/></svg>
+</div>
+
+<div id="rm-fondo" aria-hidden="true">
+    <svg width="0" height="0" style="position:absolute" focusable="false">
+        <defs>
+            <symbol id="rm-lazo" viewBox="0 -4 100 146" overflow="visible">
+                <!-- tira de atrás (más oscura) -->
+                <path d="M50 6C42 6 34 12 30 26C26 40 30 56 42 78L72 132" fill="none" stroke="currentColor" stroke-width="15"/>
+                <path d="M50 6C42 6 34 12 30 26C26 40 30 56 42 78L72 132" fill="none" stroke="#2e1065" stroke-opacity=".22" stroke-width="15"/>
+                <!-- tira de adelante (más clara) -->
+                <path d="M28 132L58 78C70 56 74 40 70 26C66 12 58 6 50 6" fill="none" stroke="currentColor" stroke-width="15"/>
+                <path d="M28 132L58 78C70 56 74 40 70 26C66 12 58 6 50 6" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="15"/>
+                <!-- brillo central -->
+                <path d="M36 120L60 77C69 58 72 42 68 28" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2.5" stroke-linecap="round"/>
+            </symbol>
+        </defs>
+    </svg>
+
+    <!-- Lazos grandes que flotan en su lugar -->
+    <div class="rm-lazos">
+        <svg class="rm-ancla rm-ancla-1" viewBox="0 -4 100 146"><use href="#rm-lazo"/></svg>
+        <svg class="rm-ancla rm-ancla-2" viewBox="0 -4 100 146"><use href="#rm-lazo"/></svg>
+        <svg class="rm-ancla rm-ancla-3" viewBox="0 -4 100 146"><use href="#rm-lazo"/></svg>
+
+        <!-- Lazos pequeños que suben y se mecen -->
+        <div class="rm-sube" style="--x:6%;--t:26s;--dl:-3s;--s:34px;--c:#a78bfa"><svg class="rm-mece" viewBox="0 -4 100 146"><use href="#rm-lazo"/></svg></div>
+        <div class="rm-sube" style="--x:18%;--t:32s;--dl:-17s;--s:24px;--c:#c084fc"><svg class="rm-mece" viewBox="0 -4 100 146"><use href="#rm-lazo"/></svg></div>
+        <div class="rm-sube" style="--x:31%;--t:29s;--dl:-9s;--s:40px;--c:#8b5cf6"><svg class="rm-mece" viewBox="0 -4 100 146"><use href="#rm-lazo"/></svg></div>
+        <div class="rm-sube" style="--x:47%;--t:35s;--dl:-24s;--s:28px;--c:#d8b4fe"><svg class="rm-mece" viewBox="0 -4 100 146"><use href="#rm-lazo"/></svg></div>
+        <div class="rm-sube" style="--x:62%;--t:27s;--dl:-13s;--s:36px;--c:#a78bfa"><svg class="rm-mece" viewBox="0 -4 100 146"><use href="#rm-lazo"/></svg></div>
+        <div class="rm-sube" style="--x:76%;--t:31s;--dl:-5s;--s:26px;--c:#7c3aed"><svg class="rm-mece" viewBox="0 -4 100 146"><use href="#rm-lazo"/></svg></div>
+        <div class="rm-sube" style="--x:88%;--t:28s;--dl:-20s;--s:38px;--c:#c084fc"><svg class="rm-mece" viewBox="0 -4 100 146"><use href="#rm-lazo"/></svg></div>
+        <div class="rm-sube" style="--x:54%;--t:38s;--dl:-31s;--s:22px;--c:#8b5cf6"><svg class="rm-mece" viewBox="0 -4 100 146"><use href="#rm-lazo"/></svg></div>
+    </div>
+
+    <!-- Burbujas que nacen de las olas -->
+    <div class="rm-burbujas">
+        <span style="--x:9%;--t:14s;--dl:-2s;--s:10px"></span>
+        <span style="--x:23%;--t:18s;--dl:-9s;--s:6px"></span>
+        <span style="--x:39%;--t:16s;--dl:-5s;--s:12px"></span>
+        <span style="--x:57%;--t:20s;--dl:-13s;--s:7px"></span>
+        <span style="--x:71%;--t:15s;--dl:-7s;--s:9px"></span>
+        <span style="--x:84%;--t:19s;--dl:-1s;--s:11px"></span>
+        <span style="--x:94%;--t:17s;--dl:-11s;--s:6px"></span>
+    </div>
+
+    <!-- Ola suave arriba -->
+    <div class="rm-olas rm-olas-arriba">
+        <svg class="rm-ola rm-ola-4" viewBox="0 0 2880 160" preserveAspectRatio="none"><path d="M0 60C240 20 480 20 720 60S1200 100 1440 60S1920 20 2160 60S2640 100 2880 60V160H0Z"/></svg>
+    </div>
+
+    <!-- Olas abajo (3 capas a distinta velocidad) -->
+    <div class="rm-olas rm-olas-abajo">
+        <svg class="rm-ola rm-ola-1" viewBox="0 0 2880 160" preserveAspectRatio="none"><path d="M0 60C240 20 480 20 720 60S1200 100 1440 60S1920 20 2160 60S2640 100 2880 60V160H0Z"/></svg>
+        <svg class="rm-ola rm-ola-2" viewBox="0 0 2880 160" preserveAspectRatio="none"><path d="M0 70C180 110 540 110 720 70S1260 30 1440 70S1980 110 2160 70S2700 30 2880 70V160H0Z"/></svg>
+        <svg class="rm-ola rm-ola-3" viewBox="0 0 2880 160" preserveAspectRatio="none"><path d="M0 85C240 55 480 55 720 85S1200 115 1440 85S1920 55 2160 85S2640 115 2880 85V160H0Z"/></svg>
+    </div>
+</div>

@@ -1,4 +1,6 @@
+import calendar
 import hashlib
+from datetime import date, timedelta
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -139,3 +141,80 @@ def crear_o_guardar_perfil(sender, instance, created, **kwargs):
             Perfil.objects.create(usuario=instance)
 # Las mamografías analizadas NO se guardan: se procesan en memoria
 # (ver prevencion/services/analisis_cnn.py).
+
+
+# ============================================================
+# RECORDATORIOS (calendario de "Mis recordatorios")
+# ============================================================
+# Solo se guarda lo necesario para mostrar el calendario: qué recordar,
+# el día, la hora y si se repite. Al borrar uno, se elimina de verdad.
+
+class Recordatorio(models.Model):
+    REPETICIONES = [
+        ('una', 'Solo ese día'),
+        ('diaria', 'Todos los días'),
+        ('semanal', 'Cada semana'),
+        ('mensual', 'Cada mes'),
+    ]
+
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recordatorios')
+    titulo = models.CharField(max_length=120, verbose_name="¿Qué recordar?")
+    fecha = models.DateField(verbose_name="Día (o desde cuándo se repite)")
+    hora = models.TimeField(verbose_name="Hora")
+    repeticion = models.CharField(max_length=10, choices=REPETICIONES, default='una', verbose_name="Repetición")
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['fecha', 'hora']
+        verbose_name = "Recordatorio"
+        verbose_name_plural = "Recordatorios"
+
+    def __str__(self):
+        return f"{self.titulo} ({self.get_repeticion_display()})"
+
+    def ocurrencias(self, desde, hasta):
+        """Días entre `desde` (incluido) y `hasta` (excluido) en que toca el recordatorio."""
+        inicio = max(self.fecha, desde)
+        if inicio >= hasta:
+            return []
+
+        if self.repeticion == 'una':
+            return [self.fecha] if desde <= self.fecha < hasta else []
+
+        if self.repeticion == 'diaria':
+            return [inicio + timedelta(days=i) for i in range((hasta - inicio).days)]
+
+        if self.repeticion == 'semanal':
+            # Primer día con el mismo día de la semana que la fecha inicial
+            dia = inicio + timedelta(days=(self.fecha.weekday() - inicio.weekday()) % 7)
+            dias = []
+            while dia < hasta:
+                dias.append(dia)
+                dia += timedelta(days=7)
+            return dias
+
+        # Mensual: el mismo número de día cada mes (si el mes no lo tiene, como
+        # el 31 en febrero, ese mes se salta)
+        dias = []
+        anio, mes = inicio.year, inicio.month
+        while date(anio, mes, 1) < hasta:
+            if self.fecha.day <= calendar.monthrange(anio, mes)[1]:
+                dia = date(anio, mes, self.fecha.day)
+                if inicio <= dia < hasta:
+                    dias.append(dia)
+            anio, mes = (anio + 1, 1) if mes == 12 else (anio, mes + 1)
+        return dias
+
+
+class RecordatorioListo(models.Model):
+    """Día en que el usuario marcó un recordatorio como "listo" (ya no aparece como pendiente)."""
+    recordatorio = models.ForeignKey(Recordatorio, on_delete=models.CASCADE, related_name='listos')
+    fecha = models.DateField()
+
+    class Meta:
+        unique_together = ('recordatorio', 'fecha')
+        verbose_name = "Recordatorio listo"
+        verbose_name_plural = "Recordatorios listos"
+
+    def __str__(self):
+        return f"{self.recordatorio.titulo} - {self.fecha}"

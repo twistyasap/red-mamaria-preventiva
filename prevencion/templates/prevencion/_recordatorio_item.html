@@ -1,0 +1,10 @@
+<div class="pendiente-item{% if proximo %} es-proximo{% endif %}" data-url="{% url 'recordatorio_listo' p.id %}" data-fecha="{{ p.fecha }}" data-momento="{{ p.momento_ms }}">
+    <div class="pendiente-texto">
+        <strong>{{ p.titulo }}</strong>
+        <small><i class="bi bi-clock me-1"></i>{{ p.cuando }}</small>
+    </div>
+    <span class="etiqueta-proximo"><i class="bi bi-hourglass-split"></i> Próximo</span>
+    <button type="button" class="btn-listo">
+        <i class="bi bi-check-lg"></i> Recordatorio listo
+    </button>
+</div>

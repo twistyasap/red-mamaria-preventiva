@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Recordatorios - Red Mamaria Preventiva con AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/media/imagenes_mamarias/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=29">
+    <link rel="stylesheet" href="{% static 'prevencion/css/movimiento.css' %}?v=1">
+</head>
+<body class="py-5">
+    {% include "prevencion/_fondo_animado.html" %}
+    <div class="container" style="max-width: 900px;">
+
+        <!-- Botón de regreso -->
+        <div class="d-flex align-items-center mb-4">
+            <a href="{% url 'inicio' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i> Volver al Inicio
+            </a>
+        </div>
+
+        <!-- Encabezado -->
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-end gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold mb-1" style="color: #7c3aed;"><i class="bi bi-calendar-heart me-2"></i>Mis Recordatorios</h2>
+                <p class="text-muted small mb-0">Toca un día del calendario para crear un recordatorio con la hora que quieras.</p>
+            </div>
+            <button type="button" class="btn btn-medtech px-4" id="btnNuevoRecordatorio">
+                <i class="bi bi-plus-lg me-1"></i> Nuevo recordatorio
+            </button>
+        </div>
+
+        <!-- Calendario -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 mb-3" data-no-anim>
+            <div id="calendarioRecordatorios"></div>
+        </div>
+
+        <p class="text-muted small d-flex gap-2 align-items-start mb-0">
+            <i class="bi bi-shield-lock"></i>
+            <span>Guardamos solo lo necesario para mostrar tu calendario: qué recordar, el día y la hora. Al borrar un recordatorio se elimina por completo.
+           </span>
+        </p>
+    </div>
+
+    <!-- Ventana para crear o editar un recordatorio -->
+    <div id="modalRecordatorio" class="modal-overlay" data-no-anim role="dialog" aria-modal="true" aria-labelledby="tituloModalRecordatorio" hidden>
+        <div class="modal-card modal-recordatorio">
+            <button type="button" class="modal-x-btn" data-cerrar-recordatorio aria-label="Cerrar">&times;</button>
+
+            <h2 class="modal-title mb-3" id="tituloModalRecordatorio">Nuevo recordatorio</h2>
+
+            <form id="formRecordatorio" novalidate>
+                <!-- ¿Qué recordar? -->
+                <div class="mb-3">
+                    <label for="tipoRecordatorio" class="form-label fw-medium small">¿Qué te recuerdo?</label>
+                    <select id="tipoRecordatorio" class="form-select">
+                        {% for texto in sugeridos %}
+                            <option value="{{ texto }}">{{ texto }}</option>
+                        {% endfor %}
+                        <option value="__otro__">Otro (escribirlo yo)</option>
+                    </select>
+                    <input type="text" id="tituloOtro" class="form-control mt-2" maxlength="120" placeholder="Ej: Llevar mis exámenes al control" hidden>
+                </div>
+
+                <!-- Día -->
+                <div class="mb-3">
+                    <label for="fechaRecordatorio" class="form-label fw-medium small" id="etiquetaFecha">Día</label>
+                    <input type="date" id="fechaRecordatorio" class="form-control" required>
+                </div>
+
+                <!-- Hora exacta con AM / PM -->
+                <div class="mb-3">
+                    <label class="form-label fw-medium small" for="horaRecordatorio">¿A qué hora?</label>
+                    <div class="d-flex gap-2 align-items-center">
+                        <select id="horaRecordatorio" class="form-select" aria-label="Hora">
+                            {% for h in "123456789"|make_list %}<option value="{{ h }}">{{ h }}</option>{% endfor %}
+                            <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                        </select>
+                        <span class="fw-bold">:</span>
+                        <select id="minutoRecordatorio" class="form-select" aria-label="Minutos"></select>
+                        <select id="ampmRecordatorio" class="form-select" aria-label="AM o PM">
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Repetición -->
+                <div class="mb-3">
+                    <label for="repeticionRecordatorio" class="form-label fw-medium small">¿Se repite?</label>
+                    <select id="repeticionRecordatorio" class="form-select">
+                        {% for valor, texto in repeticiones %}
+                            <option value="{{ valor }}">{{ texto }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="alert alert-danger small py-2" id="errorRecordatorio" hidden></div>
+
+                <button type="submit" class="btn-entendido mb-2" id="btnGuardarRecordatorio">Guardar</button>
+
+                <div id="accionesEdicion" hidden>
+                    <button type="button" class="btn btn-salir btn-sm w-100" id="btnBorrarRecordatorio">
+                        <i class="bi bi-trash3 me-1"></i> Borrar recordatorio
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const RECORDATORIOS = {
+            eventos: "{% url 'recordatorios_eventos' %}",
+            guardar: "{% url 'recordatorio_guardar' %}",
+            borrar: "/recordatorios/ID/borrar/",
+            csrf: "{{ csrf_token }}",
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales/es.global.min.js"></script>
+    <script src="{% static 'prevencion/js/recordatorios.js' %}?v=3"></script>
+    <script src="{% static 'prevencion/js/movimiento.js' %}?v=1" defer></script>
+</body>
+</html>

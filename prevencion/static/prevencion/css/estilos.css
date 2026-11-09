@@ -961,6 +961,100 @@ h1, h2, h3, h4, h5, h6 {
 .modulo-texto h5 { color: #7c3aed; margin-bottom: 0.5rem; }
 .modulo-texto p  { margin: 0; }
 
+/* Recordatorios pendientes en la tarjeta "Mis Recordatorios" */
+.modulo-card.con-pendientes {
+    padding-top: 3.25rem !important;   /* espacio para el aviso de la esquina */
+    border-color: #f9a8d4 !important;
+}
+.aviso-pendiente {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #f472b6 0%, #db2777 100%);
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(219, 39, 119, 0.3);
+}
+.aviso-pendiente .bi-bell-fill {
+    display: inline-block;
+    animation: campana 2.4s ease-in-out infinite;
+    transform-origin: top center;
+}
+@keyframes campana {
+    0%, 70%, 100% { transform: rotate(0); }
+    75% { transform: rotate(14deg); }
+    85% { transform: rotate(-12deg); }
+    95% { transform: rotate(6deg); }
+}
+
+.pendientes {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: left;
+}
+.pendiente-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 12px;
+    background-color: #fdf2f8;
+    border: 1px solid #fbcfe8;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.pendiente-item[hidden] { display: none; }
+.pendiente-item.pendiente-hecho { opacity: 0; transform: translateX(20px); }
+.pendiente-texto { min-width: 0; display: flex; flex-direction: column; }
+.pendiente-texto strong { font-size: 0.88rem; color: var(--text-dark); line-height: 1.3; }
+.pendiente-texto small  { font-size: 0.76rem; color: #be185d; }
+.btn-listo {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.75rem;
+    border: none;
+    border-radius: 999px;
+    background-color: #16a34a;
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+.btn-listo:hover { background-color: #15803d; }
+.btn-listo:active { transform: scale(0.96); }
+.btn-listo:disabled { opacity: 0.6; cursor: wait; }
+
+/* Próximo recordatorio (aún no llega la hora): en gris claro */
+.etiqueta-proximo {
+    display: none;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background-color: #e5e7eb;
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.pendiente-item.es-proximo { background-color: #f9fafb; border-color: #e5e7eb; }
+.pendiente-item.es-proximo .pendiente-texto strong { color: #6b7280; }
+.pendiente-item.es-proximo .pendiente-texto small  { color: #9ca3af; }
+.pendiente-item.es-proximo .etiqueta-proximo { display: inline-flex; }
+.pendiente-item.es-proximo .btn-listo { display: none; }
+.pendientes-mas { margin: 0; font-size: 0.78rem; color: var(--text-muted, #6b7280); text-align: center; }
+
 .hero-titulo {
     color: #7c3aed !important;
     letter-spacing: -0.5px;
@@ -1011,6 +1105,7 @@ input:-webkit-autofill:focus {
         grid-template-columns: auto 1fr;
         grid-template-areas:
             "icono texto"
+            "pendientes pendientes"
             "boton boton";
         align-items: center;
         text-align: left;
@@ -1021,6 +1116,8 @@ input:-webkit-autofill:focus {
     .modulo-texto h5 { font-size: 1.05rem; margin-bottom: 0.2rem; }
     .modulo-texto p  { font-size: 0.85rem; line-height: 1.4; }
     .modulo-btn { grid-area: boton; margin-top: 0 !important; }
+    .pendientes { grid-area: pendientes; }
+    .modulo-card.con-pendientes { padding-top: 2.9rem !important; }
 
     .chat-widget-btn {
         width: 56px;
@@ -1133,3 +1230,121 @@ input:-webkit-autofill:focus {
 .requisitos-clave li i { color: var(--purple-300); transition: color 0.25s ease, transform 0.25s ease; }
 .requisitos-clave li.cumple { color: #15803d; }
 .requisitos-clave li.cumple i { color: #16a34a; transform: scale(1.15); }
+
+/* ===================================================
+   MIS RECORDATORIOS (calendario FullCalendar)
+   =================================================== */
+.modal-recordatorio {
+    max-width: 460px;
+    max-height: 92vh;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.modal-recordatorio .modal-title { text-align: center; }
+
+#calendarioRecordatorios {
+    --fc-border-color: #ede9fe;
+    --fc-button-bg-color: #ffffff;
+    --fc-button-border-color: #ddd6fe;
+    --fc-button-text-color: #6d28d9;
+    --fc-button-hover-bg-color: #f5f3ff;
+    --fc-button-hover-border-color: #c4b5fd;
+    --fc-button-active-bg-color: #7c3aed;
+    --fc-button-active-border-color: #7c3aed;
+    --fc-today-bg-color: #fdf2f8;
+    --fc-list-event-hover-bg-color: #f8f5fe;
+    --fc-neutral-bg-color: #f8f5fe;
+    font-size: 0.95rem;
+}
+
+#calendarioRecordatorios .fc-toolbar-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1e1633;
+}
+
+/* Solo la primera letra en mayúscula: "Noviembre de 2026" */
+#calendarioRecordatorios .fc-toolbar-title::first-letter,
+#calendarioRecordatorios .fc-list-day-text::first-letter { text-transform: uppercase; }
+
+#calendarioRecordatorios .fc-button {
+    border-radius: 50px !important;
+    padding: 0.35rem 0.9rem;
+    font-weight: 600;
+    box-shadow: none !important;
+    text-transform: capitalize;
+}
+
+#calendarioRecordatorios .fc-button-group { gap: 6px; }
+#calendarioRecordatorios .fc-button-active { color: #ffffff !important; }
+
+#calendarioRecordatorios .fc-col-header-cell-cushion {
+    color: #74638d;
+    font-weight: 600;
+    text-decoration: none;
+    text-transform: capitalize;
+}
+
+#calendarioRecordatorios .fc-daygrid-day-number {
+    color: #4a4458;
+    text-decoration: none;
+}
+
+#calendarioRecordatorios .fc-daygrid-day { cursor: pointer; }
+#calendarioRecordatorios .fc-daygrid-day:hover { background: #faf5ff; }
+
+#calendarioRecordatorios .fc-day-today .fc-daygrid-day-number {
+    background: #db2777;
+    color: #ffffff;
+    border-radius: 50%;
+    min-width: 26px;
+    text-align: center;
+}
+
+#calendarioRecordatorios .fc-daygrid-event {
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 0.78rem;
+}
+
+/* Bootstrap pinta los enlaces de azul: dentro del calendario usan los colores del sitio */
+#calendarioRecordatorios a { color: inherit; text-decoration: none; }
+
+/* En la vista de mes el texto se ve completo (en varias líneas) en vez de cortarse */
+/* (arriba el punto y la hora, abajo el texto) */
+#calendarioRecordatorios .fc-daygrid-dot-event {
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 2px 4px;
+}
+
+#calendarioRecordatorios .fc-daygrid-dot-event .fc-event-time {
+    color: #be185d;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+#calendarioRecordatorios .fc-daygrid-dot-event .fc-event-title {
+    flex-basis: 100%;
+    color: #1e1633;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: normal;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+#calendarioRecordatorios .fc-daygrid-dot-event:hover { background: #fdf2f8; }
+
+#calendarioRecordatorios .fc-list-day-cushion a { color: #6d28d9; font-weight: 600; }
+#calendarioRecordatorios .fc-list-event { cursor: pointer; }
+#calendarioRecordatorios .fc-list-day-side-text { text-transform: capitalize; }
+#calendarioRecordatorios .fc-daygrid-more-link { color: #7c3aed; font-weight: 600; }
+
+@media (max-width: 576px) {
+    /* En celular el mes va arriba, en su propia línea, y los botones debajo */
+    #calendarioRecordatorios .fc-toolbar { flex-wrap: wrap; gap: 10px; }
+    #calendarioRecordatorios .fc-toolbar-chunk:nth-child(2) { order: -1; width: 100%; text-align: center; }
+    #calendarioRecordatorios .fc-toolbar-title { font-size: 1.15rem; }
+    #calendarioRecordatorios .fc-button { padding: 0.3rem 0.7rem; font-size: 0.85rem; }
+}

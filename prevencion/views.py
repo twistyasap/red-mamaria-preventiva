@@ -1,8 +1,10 @@
 import json
 import time
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 import requests
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -15,7 +17,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 from .forms import FormularioUsuario, FormularioPerfil
-from .models import Perfil, PreguntaEducativa
+from .models import Perfil, PreguntaEducativa, Recordatorio, RecordatorioListo
 from .services.respuestas_respaldo import obtener_respuesta_respaldo
 from .services.correos import enviar_bienvenida
 from .services.analisis_cnn import (
@@ -253,12 +255,15 @@ def cerrar_sesion(request):
 def inicio(request):
 
     bienvenida = request.session.pop('bienvenida', None)
+    pendientes, proximos = recordatorios_pendientes(request.user)
 
     return render(
         request,
         'prevencion/inicio.html',
         {
             'bienvenida': bienvenida,
+            'pendientes': pendientes,
+            'proximos': proximos,
         }
     )
 
@@ -767,3 +772,194 @@ hombres?"), respóndela en relación a lo que se venía hablando.
             'respuesta': texto_respuesta
         }
     )
+
+# ============================================================
+# MIS RECORDATORIOS (calendario)
+# ============================================================
+
+# Opciones listas para elegir (el usuario también puede escribir otra)
+RECORDATORIOS_SUGERIDOS = [
+    'Hacer mi autoexamen de mamas',
+    'Pedir hora para mi mamografía',
+    'Control con mi médico o matrona',
+    'Tomar mis medicamentos',
+    'Hacer actividad física',
+]
+MAXIMO_RECORDATORIOS = 50
+
+
+def _recordatorio_a_dict(recordatorio):
+    return {
+        'id': recordatorio.id,
+        'titulo': recordatorio.titulo,
+        'fecha': recordatorio.fecha.isoformat(),
+        'hora': recordatorio.hora.strftime('%H:%M'),
+        'repeticion': recordatorio.repeticion,
+    }
+
+
+@login_required(login_url='iniciar_sesion')
+def recordatorios(request):
+    return render(
+        request,
+        'prevencion/recordatorios.html',
+        {
+            'sugeridos': RECORDATORIOS_SUGERIDOS,
+            'repeticiones': Recordatorio.REPETICIONES,
+        }
+    )
+
+
+@login_required(login_url='iniciar_sesion')
+def recordatorios_eventos(request):
+    # El calendario pide los eventos del rango que está mostrando
+    # (?start=2026-10-26T00:00:00-03:00&end=2026-12-07T00:00:00-03:00)
+    try:
+        desde = date.fromisoformat((request.GET.get('start') or '')[:10])
+        hasta = date.fromisoformat((request.GET.get('end') or '')[:10])
+    except ValueError:
+        return JsonResponse({'error': 'Rango de fechas no válido.'}, status=400)
+
+    # Como máximo unos 3 meses por consulta
+    hasta = min(hasta, desde + timedelta(days=100))
+
+    eventos = []
+    for recordatorio in request.user.recordatorios.all():
+        datos = _recordatorio_a_dict(recordatorio)
+        for dia in recordatorio.ocurrencias(desde, hasta):
+            eventos.append({
+                'id': f'{recordatorio.id}-{dia.isoformat()}',
+                'title': recordatorio.titulo,
+                'start': f'{dia.isoformat()}T{datos["hora"]}',
+                'extendedProps': datos,
+            })
+
+    return JsonResponse(eventos, safe=False)
+
+
+@login_required(login_url='iniciar_sesion')
+@require_POST
+def recordatorio_guardar(request):
+    try:
+        datos = json.loads(request.body)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({'error': 'Datos no válidos.'}, status=400)
+
+    titulo = (datos.get('titulo') or '').strip()
+    repeticion = datos.get('repeticion') or 'una'
+
+    if not titulo:
+        return JsonResponse({'error': 'Escribe qué quieres que te recordemos.'}, status=400)
+    if len(titulo) > 120:
+        return JsonResponse({'error': 'El recordatorio puede tener como máximo 120 caracteres.'}, status=400)
+    if repeticion not in dict(Recordatorio.REPETICIONES):
+        return JsonResponse({'error': 'Elige cada cuánto se repite.'}, status=400)
+    try:
+        fecha = date.fromisoformat(datos.get('fecha') or '')
+        hora = datetime.strptime(datos.get('hora') or '', '%H:%M').time()
+    except ValueError:
+        return JsonResponse({'error': 'Elige un día y una hora válidos.'}, status=400)
+
+    if datos.get('id'):
+        recordatorio = get_object_or_404(Recordatorio, id=datos['id'], usuario=request.user)
+    else:
+        if request.user.recordatorios.count() >= MAXIMO_RECORDATORIOS:
+            return JsonResponse(
+                {'error': f'Puedes tener como máximo {MAXIMO_RECORDATORIOS} recordatorios. Borra alguno para crear otro.'},
+                status=400
+            )
+        recordatorio = Recordatorio(usuario=request.user)
+
+    recordatorio.titulo = titulo
+    recordatorio.fecha = fecha
+    recordatorio.hora = hora
+    recordatorio.repeticion = repeticion
+    recordatorio.save()
+
+    return JsonResponse({'ok': True, 'recordatorio': _recordatorio_a_dict(recordatorio)})
+
+
+@login_required(login_url='iniciar_sesion')
+@require_POST
+def recordatorio_borrar(request, id_recordatorio):
+    recordatorio = get_object_or_404(Recordatorio, id=id_recordatorio, usuario=request.user)
+    recordatorio.delete()
+    return JsonResponse({'ok': True})
+
+
+# ---------- Recordatorios pendientes (aviso en la página de inicio) ----------
+
+# Los usuarios están en Chile; el servidor (Vercel) funciona en hora UTC
+ZONA_CHILE = ZoneInfo('America/Santiago')
+DIAS_PENDIENTES = 30   # se revisan solo los últimos 30 días
+DIAS_PROXIMOS = 7      # y los próximos 7 días (se muestran en gris)
+MAXIMO_PROXIMOS = 2
+DIAS_SEMANA = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom']
+MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+
+def _hora_am_pm(hora):
+    return f'{hora.hour % 12 or 12}:{hora.minute:02d} {"AM" if hora.hour < 12 else "PM"}'
+
+
+def _texto_dia(dia, hoy):
+    if dia == hoy:
+        return 'Hoy'
+    if dia == hoy - timedelta(days=1):
+        return 'Ayer'
+    if dia == hoy + timedelta(days=1):
+        return 'Mañana'
+    return f'{DIAS_SEMANA[dia.weekday()]} {dia.day} {MESES[dia.month - 1]}'
+
+
+def recordatorios_pendientes(usuario):
+    """
+    Recordatorios para la tarjeta del inicio:
+    - pendientes: su fecha y hora ya llegaron y aún no se marcaron como listos
+      (los más recientes primero)
+    - próximos: los que vienen en los siguientes días (los más cercanos primero)
+    """
+    ahora = datetime.now(ZONA_CHILE).replace(tzinfo=None)
+    hoy = ahora.date()
+
+    pendientes, proximos = [], []
+    for recordatorio in usuario.recordatorios.prefetch_related('listos'):
+        # No se cuentan días anteriores a cuando se creó el recordatorio
+        desde = max(hoy - timedelta(days=DIAS_PENDIENTES), recordatorio.creado.astimezone(ZONA_CHILE).date())
+        listos = {listo.fecha for listo in recordatorio.listos.all()}
+
+        for dia in recordatorio.ocurrencias(desde, hoy + timedelta(days=DIAS_PROXIMOS + 1)):
+            if dia in listos:
+                continue
+            momento = datetime.combine(dia, recordatorio.hora)
+            item = {
+                'id': recordatorio.id,
+                'titulo': recordatorio.titulo,
+                'fecha': dia.isoformat(),
+                'cuando': f'{_texto_dia(dia, hoy)}, {_hora_am_pm(recordatorio.hora)}',
+                'momento': momento,
+                # Milisegundos para que la página sepa cuándo pasarlo de gris a pendiente
+                'momento_ms': int(momento.replace(tzinfo=ZONA_CHILE).timestamp() * 1000),
+            }
+            (pendientes if momento <= ahora else proximos).append(item)
+
+    pendientes.sort(key=lambda p: p['momento'], reverse=True)
+    proximos.sort(key=lambda p: p['momento'])
+    return pendientes, proximos[:MAXIMO_PROXIMOS]
+
+
+@login_required(login_url='iniciar_sesion')
+@require_POST
+def recordatorio_listo(request, id_recordatorio):
+    recordatorio = get_object_or_404(Recordatorio, id=id_recordatorio, usuario=request.user)
+    try:
+        fecha = date.fromisoformat(json.loads(request.body).get('fecha') or '')
+    except (ValueError, AttributeError, json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({'error': 'Fecha no válida.'}, status=400)
+
+    # Solo se puede marcar un día en que de verdad toca el recordatorio
+    if not recordatorio.ocurrencias(fecha, fecha + timedelta(days=1)):
+        return JsonResponse({'error': 'Ese día no tiene este recordatorio.'}, status=400)
+
+    RecordatorioListo.objects.get_or_create(recordatorio=recordatorio, fecha=fecha)
+    return JsonResponse({'ok': True})

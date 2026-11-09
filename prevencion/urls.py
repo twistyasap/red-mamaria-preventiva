@@ -13,4 +13,9 @@ urlpatterns = [
     path('asistente-virtual/', views.asistente_virtual, name='asistente_virtual'),
     path('asistente-virtual/mensaje/', views.asistente_virtual_mensaje, name='asistente_virtual_mensaje'),
     path('perfil/', views.perfil_usuario, name='perfil_usuario'),
+    path('recordatorios/', views.recordatorios, name='recordatorios'),
+    path('recordatorios/eventos/', views.recordatorios_eventos, name='recordatorios_eventos'),
+    path('recordatorios/guardar/', views.recordatorio_guardar, name='recordatorio_guardar'),
+    path('recordatorios/<int:id_recordatorio>/borrar/', views.recordatorio_borrar, name='recordatorio_borrar'),
+    path('recordatorios/<int:id_recordatorio>/listo/', views.recordatorio_listo, name='recordatorio_listo'),
 ]

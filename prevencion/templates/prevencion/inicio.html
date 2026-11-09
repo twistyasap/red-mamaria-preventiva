@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="/media/imagenes_mamarias/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=26">
+    <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=29">
     <link rel="stylesheet" href="{% static 'prevencion/css/movimiento.css' %}?v=1">
 </head>
 <body class="py-5">
@@ -61,7 +61,7 @@
         <!-- Módulos principales -->
         <div class="row g-3 g-md-4 justify-content-center">
 
-            <div class="col-12 col-md-6 col-lg-4">
+            <div class="col-12 col-md-6">
                 <div class="card-session modulo-card p-4 h-100">
                     <div class="modulo-icono"><i class="bi bi-journal-bookmark-fill"></i></div>
                     <div class="modulo-texto">
@@ -74,7 +74,7 @@
                 </div>
             </div>
 
-            <div class="col-12 col-md-6 col-lg-4">
+            <div class="col-12 col-md-6">
                 <div class="card-session modulo-card p-4 h-100">
                     <div class="modulo-icono"><i class="bi bi-file-earmark-medical-fill"></i></div>
                     <div class="modulo-texto">
@@ -87,7 +87,7 @@
                 </div>
             </div>
 
-            <div class="col-12 col-md-6 col-lg-4">
+            <div class="col-12 col-md-6">
                 <div class="card-session modulo-card p-4 h-100">
                     <div class="modulo-icono"><i class="bi bi-hand-index-thumb-fill"></i></div>
                     <div class="modulo-texto">
@@ -97,6 +97,38 @@
                     <button type="button" class="btn btn-medtech w-100 modulo-btn" id="abrirGuiaBtn">
                         Ver guía <i class="bi bi-arrow-right ms-1"></i>
                     </button>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <div class="card-session modulo-card p-4 h-100{% if pendientes %} con-pendientes{% endif %}" id="tarjetaRecordatorios">
+                    {% if pendientes or proximos %}
+                        <!-- Aviso en la esquina: solo se quita marcando los recordatorios como listos -->
+                        <span class="aviso-pendiente" id="avisoPendiente" role="status"{% if not pendientes %} hidden{% endif %}>
+                            <i class="bi bi-bell-fill"></i>
+                            <span id="textoPendiente"></span>
+                        </span>
+                    {% endif %}
+                    <div class="modulo-icono"><i class="bi bi-calendar-heart-fill"></i></div>
+                    <div class="modulo-texto">
+                        <h5 class="fw-bold">Mis Recordatorios</h5>
+                        <p class="text-muted small">Agenda en un calendario tu autoexamen, tus controles y lo que necesites recordar.</p>
+                    </div>
+                    {% if pendientes or proximos %}
+                        <!-- Pendientes (rosado, con botón verde) y próximos (gris, pasan a pendiente al llegar la hora) -->
+                        <div class="pendientes" id="listaPendientes">
+                            {% for p in pendientes %}
+                                {% include "prevencion/_recordatorio_item.html" with proximo=False %}
+                            {% endfor %}
+                            <p class="pendientes-mas" id="pendientesMas" hidden></p>
+                            {% for p in proximos %}
+                                {% include "prevencion/_recordatorio_item.html" with proximo=True %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <a href="{% url 'recordatorios' %}" class="btn btn-medtech w-100 modulo-btn">
+                        Abrir calendario <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
                 </div>
             </div>
 
@@ -147,7 +179,7 @@
     </div>
 
     <!-- Ventana con la guía de autoexamen y los números de ayuda -->
-    <div id="modalGuia" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tituloGuia" hidden>
+    <div id="modalGuia" class="modal-overlay" data-no-anim role="dialog" aria-modal="true" aria-labelledby="tituloGuia" hidden>
         <div class="modal-card modal-bienvenida">
             <button type="button" class="modal-x-btn" data-cerrar-guia aria-label="Cerrar">&times;</button>
 
@@ -248,7 +280,7 @@
 
     {% if bienvenida %}
     <!-- Pop-up de bienvenida (solo después de iniciar sesión o registrarse) -->
-    <div id="modalBienvenida" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tituloBienvenida">
+    <div id="modalBienvenida" class="modal-overlay" data-no-anim role="dialog" aria-modal="true" aria-labelledby="tituloBienvenida">
         <div class="modal-card modal-bienvenida">
             <button type="button" class="modal-x-btn" data-cerrar-bienvenida aria-label="Cerrar">&times;</button>
 
@@ -346,6 +378,77 @@
         const CSRF_TOKEN = "{{ csrf_token }}";
     </script>
     <script src="{% static 'prevencion/js/chat_sonia.js' %}"></script>
+    {% if pendientes or proximos %}
+    <script>
+        // Recordatorios del inicio:
+        // - los próximos se ven en gris y, al llegar su hora, pasan solos a pendientes
+        // - botón verde "Recordatorio listo": marca ese día como hecho y lo quita del aviso
+        (function () {
+            const tarjeta = document.getElementById("tarjetaRecordatorios");
+            const lista = document.getElementById("listaPendientes");
+            const aviso = document.getElementById("avisoPendiente");
+            const mas = document.getElementById("pendientesMas");
+            const VISIBLES = 2;
+
+            function actualizarAviso() {
+                const pendientes = lista.querySelectorAll(".pendiente-item:not(.es-proximo)");
+                const total = pendientes.length;
+                if (!lista.querySelector(".pendiente-item")) {
+                    aviso.remove();
+                    lista.remove();
+                    tarjeta.classList.remove("con-pendientes");
+                    clearInterval(revision);
+                    return;
+                }
+                aviso.hidden = total === 0;
+                tarjeta.classList.toggle("con-pendientes", total > 0);
+                document.getElementById("textoPendiente").textContent = total === 1
+                    ? "¡Tienes un recordatorio pendiente!"
+                    : "¡Tienes " + total + " recordatorios pendientes!";
+                pendientes.forEach(function (item, i) { item.hidden = i >= VISIBLES; });
+                mas.hidden = total <= VISIBLES;
+                mas.textContent = "y " + (total - VISIBLES) + " más";
+            }
+
+            // Cada 20 segundos: si a un próximo ya le llegó la hora, pasa a pendiente (arriba de la lista)
+            function revisarHora() {
+                let cambio = false;
+                lista.querySelectorAll(".pendiente-item.es-proximo").forEach(function (item) {
+                    if (Number(item.dataset.momento) <= Date.now()) {
+                        item.classList.remove("es-proximo");
+                        lista.prepend(item);
+                        cambio = true;
+                    }
+                });
+                if (cambio) actualizarAviso();
+            }
+            const revision = setInterval(revisarHora, 20000);
+
+            tarjeta.querySelectorAll(".btn-listo").forEach(function (boton) {
+                boton.addEventListener("click", async function () {
+                    const item = boton.closest(".pendiente-item");
+                    boton.disabled = true;
+                    try {
+                        const respuesta = await fetch(item.dataset.url, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json", "X-CSRFToken": CSRF_TOKEN },
+                            body: JSON.stringify({ fecha: item.dataset.fecha }),
+                        });
+                        if (!respuesta.ok) throw new Error();
+                        item.classList.add("pendiente-hecho");
+                        setTimeout(function () { item.remove(); actualizarAviso(); }, 350);
+                    } catch (e) {
+                        boton.disabled = false;
+                        alert("No se pudo marcar como listo. Intenta de nuevo.");
+                    }
+                });
+            });
+
+            revisarHora();
+            actualizarAviso();
+        })();
+    </script>
+    {% endif %}
     <script src="{% static 'prevencion/js/movimiento.js' %}?v=1" defer></script>
 </body>
 </html>

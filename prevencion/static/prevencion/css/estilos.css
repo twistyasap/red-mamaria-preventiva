@@ -37,7 +37,7 @@
 
 html {
     scroll-behavior: smooth;
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100%;
     touch-action: pan-y;
 }
@@ -52,7 +52,7 @@ body {
     width: 100%;
     max-width: 100%;
     position: relative;
-    overflow-x: hidden;
+    overflow-x: clip;
     touch-action: pan-y;
 }
 

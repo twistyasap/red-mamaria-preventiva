@@ -109,6 +109,86 @@ def leer_imagen(contenido):
     return imagen
 
 
+def _gris_reducido(imagen):
+    """Copia pequeña en escala de grises (0-255) para los filtros rápidos."""
+
+    muestra = imagen.copy()
+
+    # PNG de 16 bits: pasar a 8 bits (si no, al convertir queda blanca)
+    if muestra.mode in ('I;16', 'I;16L', 'I;16B', 'I'):
+        valores = np.asarray(muestra, dtype=np.float32) / 65535.0 * 255.0
+        muestra = Image.fromarray(np.clip(valores, 0, 255).astype(np.uint8))
+
+    muestra.thumbnail((256, 256))
+    return np.asarray(muestra.convert('RGB'), dtype=np.float32)
+
+
+def es_imagen_doble(imagen):
+    """
+    Detecta imágenes con DOS mamas lado a lado (por ejemplo R-MLO y L-MLO
+    juntas). El modelo se entrenó con una sola mama por imagen, así que
+    estas imágenes deben rechazarse.
+
+    Se usa el canal más brillante para que también funcione con
+    mamografías teñidas (azules, etc.). Se mira cuánto tejido hay en cada
+    columna de la imagen:
+    - Doble con separación: hay una franja vacía en el medio con bastante
+      tejido a ambos lados.
+    - Doble sin separación: imagen apaisada con el tejido repartido de
+      forma pareja entre las dos mitades (una mama sola queda cargada
+      hacia un costado).
+    """
+
+    gris = _gris_reducido(imagen).max(axis=-1)
+
+    # Fondo claro (mamografía invertida): llevar a fondo oscuro
+    borde = np.concatenate([gris[0], gris[-1], gris[:, 0], gris[:, -1]])
+    if (borde > 200).mean() > 0.6:
+        gris = 255 - gris
+
+    tejido = gris > 40
+    ocupacion = tejido.mean(axis=0)
+    ancho = len(ocupacion)
+    total = ocupacion.sum()
+
+    if total == 0:
+        return False
+
+    # 1) Franja vacía entre dos zonas con tejido
+    vacia = ocupacion < 0.03
+    hay_tejido = ocupacion > 0.10
+    x = 0
+    while x < ancho:
+        if not vacia[x]:
+            x += 1
+            continue
+        inicio = x
+        while x < ancho and vacia[x]:
+            x += 1
+        fin = x  # franja vacía: columnas [inicio, fin)
+
+        izq, der = ocupacion[:inicio], ocupacion[fin:]
+        if (
+            izq.sum() >= 0.25 * total
+            and der.sum() >= 0.25 * total
+            and hay_tejido[:inicio].sum() >= 0.15 * ancho
+            and hay_tejido[fin:].sum() >= 0.15 * ancho
+        ):
+            return True
+
+    # 2) Apaisada y con el tejido parejo en ambas mitades (umbral más
+    #    bajo: con el borde de la mama incluido se reparte mejor)
+    alto = gris.shape[0]
+    mitad = ancho // 2
+    ocupacion = (gris > 15).mean(axis=0)
+    izq, der = ocupacion[:mitad].mean(), ocupacion[mitad:].mean()
+    return (
+        ancho >= 1.3 * alto
+        and min(izq, der) >= 0.25
+        and max(izq, der) / min(izq, der) <= 1.6
+    )
+
+
 def parece_mamografia(imagen):
     """
     Filtro básico para rechazar imágenes que claramente no son una
@@ -119,15 +199,7 @@ def parece_mamografia(imagen):
     notebook y con fotos, logos, documentos e imágenes de ruido.
     """
 
-    muestra = imagen.copy()
-
-    # PNG de 16 bits: pasar a 8 bits (si no, al convertir queda blanca)
-    if muestra.mode in ('I;16', 'I;16L', 'I;16B', 'I'):
-        valores = np.asarray(muestra, dtype=np.float32) / 65535.0 * 255.0
-        muestra = Image.fromarray(np.clip(valores, 0, 255).astype(np.uint8))
-
-    muestra.thumbnail((256, 256))
-    a = np.asarray(muestra.convert('RGB'), dtype=np.float32)
+    a = _gris_reducido(imagen)
 
     color = (
         np.abs(a[..., 0] - a[..., 1])
@@ -248,6 +320,15 @@ def analizar_mamografia(contenido):
     """
 
     imagen = leer_imagen(contenido)
+
+    # Antes que el filtro general, para dar un mensaje claro
+    if es_imagen_doble(imagen):
+        raise ImagenNoValida(
+            'La imagen contiene dos mamas. Sube una imagen de UNA sola '
+            'mama (por ejemplo, solo la derecha o solo la izquierda). Si '
+            'tu examen trae ambas en la misma imagen, recórtala y sube '
+            'cada lado por separado.'
+        )
 
     if not parece_mamografia(imagen):
         raise ImagenNoValida(

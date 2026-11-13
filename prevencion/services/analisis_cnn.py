@@ -3,7 +3,7 @@ Análisis de mamografías con la CNN (modelo 2: EfficientNetB0 entrenada con
 mamografías digitales de RSNA, pregunta "sana / requiere evaluación").
 
 El modelo se entrenó en Google Colab con TensorFlow y se convirtió a ONNX
-(ver modelo_cnn_v2/), para poder ejecutarlo en Vercel sin TensorFlow.
+(ver modelo_cnn/), para poder ejecutarlo en Vercel sin TensorFlow.
 El preprocesamiento (preprocesamiento_v2.py) es el MISMO archivo que generó
 el notebook de entrenamiento: recorta la mama y quita etiquetas y marcadores.
 

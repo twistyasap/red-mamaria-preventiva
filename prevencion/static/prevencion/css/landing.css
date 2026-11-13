@@ -190,6 +190,82 @@ footer {
     border-top: 1px solid var(--border-color);
 }
 
+/* ---------- Equipo (pie de página) ---------- */
+.equipo-titulo {
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--purple-700);
+}
+.equipo-persona {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-width: 230px;
+    padding: .7rem 1rem;
+    border-radius: 18px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-soft);
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: var(--transition);
+}
+.equipo-persona:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    color: var(--text-dark);
+}
+.equipo-persona small { color: var(--text-muted); }
+.equipo-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--gradient-brand);
+    color: #fff;
+    font-weight: 600;
+}
+.equipo-persona {
+    cursor: pointer;
+    font: inherit;
+    width: 100%;
+}
+.equipo-persona:focus { outline: none; }
+.equipo-persona:focus-visible,
+.equipo-persona[aria-expanded="true"] {
+    border-color: var(--purple-500);
+    box-shadow: 0 0 0 3px var(--purple-100), var(--shadow-soft);
+}
+.equipo-flecha {
+    margin-left: auto;
+    color: var(--purple-600);
+    transition: transform .25s ease;
+}
+.equipo-persona[aria-expanded="true"] .equipo-flecha { transform: rotate(180deg); }
+.equipo-menu {
+    min-width: 100%;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-hover);
+    padding: .4rem;
+}
+.equipo-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    border-radius: 10px;
+    padding: .5rem .75rem;
+    font-weight: 500;
+}
+.equipo-menu .dropdown-item:hover,
+.equipo-menu .dropdown-item:focus { background: var(--purple-100); color: var(--purple-700); }
+.equipo-menu .dropdown-item i { font-size: 1.1rem; }
+
 /* ---------- Aparición al hacer scroll ---------- */
 .aparece {
     opacity: 0;

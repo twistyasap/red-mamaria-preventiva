@@ -26,6 +26,7 @@ from .services.analisis_cnn import (
     MAXIMO_IMAGENES,
     UMBRAL_AMARILLO,
     UMBRAL_ROJO,
+    CONFIG as CONFIG_MODELO,
 )
 
 
@@ -33,10 +34,46 @@ from .services.analisis_cnn import (
 # PÁGINA DE PRESENTACIÓN (LANDING)
 # ============================================================
 
+# Estudiantes que desarrollaron el proyecto (pie de página de la landing)
+EQUIPO = [
+    {
+        'nombre': 'Diego Mesias', 'iniciales': 'DM',
+        'linkedin': 'https://www.linkedin.com/in/diego-mesias/',
+    },
+    {
+        'nombre': 'Matías Moya', 'iniciales': 'MM',
+        'linkedin': 'https://www.linkedin.com/in/matiascristobal/',
+        'portafolio': 'https://matiasmoya.vercel.app/',
+    },
+    {
+        'nombre': 'Francisco Quiroz', 'iniciales': 'FQ',
+        'linkedin': 'https://www.linkedin.com/in/francisco-javier-quiroz-corval%C3%A1n/',
+    },
+]
+
+
 def landing(request):
     return render(
         request,
-        'prevencion/landing.html'
+        'prevencion/landing.html',
+        {'equipo': EQUIPO}
+    )
+
+
+# ============================================================
+# TRANSPARENCIA: cómo funciona la IA y qué datos se guardan
+# (pública; el tamaño de imagen sale del config.json del modelo)
+# ============================================================
+
+def transparencia(request):
+
+    return render(
+        request,
+        'prevencion/transparencia.html',
+        {
+            'alto': CONFIG_MODELO['img_h'],
+            'ancho': CONFIG_MODELO['img_w'],
+        }
     )
 
 

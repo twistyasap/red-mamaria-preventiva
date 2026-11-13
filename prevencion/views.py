@@ -21,8 +21,9 @@ from .models import Perfil, PreguntaEducativa, Recordatorio, RecordatorioListo
 from .services.respuestas_respaldo import obtener_respuesta_respaldo
 from .services.correos import enviar_bienvenida
 from .services.analisis_cnn import (
-    analizar_mamografia,
+    analizar_mamografias,
     ImagenNoValida,
+    MAXIMO_IMAGENES,
     UMBRAL_AMARILLO,
     UMBRAL_ROJO,
 )
@@ -346,15 +347,16 @@ def analisis_imagen(request):
 
     if request.method == 'POST':
 
-        imagen = request.FILES.get('imagen_original')
+        # Una o varias imágenes (por ejemplo, una por cada vista del examen)
+        imagenes = request.FILES.getlist('imagenes')
 
-        if not imagen:
+        if not imagenes:
             error = 'Debes seleccionar una imagen antes de continuar.'
 
         else:
 
             try:
-                resultado = analizar_mamografia(imagen.read())
+                resultado = analizar_mamografias([imagen.read() for imagen in imagenes])
 
             except ImagenNoValida as e:
                 error = str(e)
@@ -362,12 +364,13 @@ def analisis_imagen(request):
             except Exception as e:
                 print('ANÁLISIS: error inesperado:', repr(e))
                 error = (
-                    'Ocurrió un problema al analizar la imagen. '
+                    'Ocurrió un problema al analizar las imágenes. '
                     'Intenta nuevamente en unos minutos.'
                 )
 
             finally:
-                imagen.close()
+                for imagen in imagenes:
+                    imagen.close()
 
     return render(
         request,
@@ -377,7 +380,7 @@ def analisis_imagen(request):
             'error': error,
             'rango_verde': round(UMBRAL_AMARILLO * 100),
             'rango_rojo': round(UMBRAL_ROJO * 100),
-        }
+            'maximo_imagenes': MAXIMO_IMAGENES,        }
     )
 
 

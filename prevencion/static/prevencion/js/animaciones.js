@@ -7,8 +7,10 @@ document.addEventListener("DOMContentLoaded", function () {
     /* ---- 1. Control de Selección y Carga de Imagen ---- */
     const dropzone = document.getElementById('dropzone');
     const input = document.getElementById('imagenInput');
-    const preview = document.getElementById('previewImg');
+    const previews = document.getElementById('previews');
+    const avisoMaximo = document.getElementById('avisoMaximo');
     const submitBtn = document.getElementById('submitBtn');
+    const MAXIMO_IMAGENES = dropzone ? Number(dropzone.dataset.maximo || 4) : 4;
 
     if (dropzone && input) {
         dropzone.addEventListener('click', () => input.click());
@@ -32,29 +34,50 @@ document.addEventListener("DOMContentLoaded", function () {
         input.addEventListener('change', mostrarPreview);
     }
 
+    // Muestra una miniatura de cada imagen elegida (máximo MAXIMO_IMAGENES)
     function mostrarPreview() {
-        const file = input.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if (preview) {
-                preview.src = e.target.result;
-                preview.style.display = 'inline-block';
-            }
-        };
-        reader.readAsDataURL(file);
+        let archivos = Array.from(input.files);
+        if (!archivos.length) return;
+
+        avisoMaximo.hidden = archivos.length <= MAXIMO_IMAGENES;
+        if (archivos.length > MAXIMO_IMAGENES) {
+            avisoMaximo.textContent = 'Puedes subir como máximo ' + MAXIMO_IMAGENES +
+                ' imágenes. Usaremos solo las primeras ' + MAXIMO_IMAGENES + '.';
+            archivos = archivos.slice(0, MAXIMO_IMAGENES);
+            const transferencia = new DataTransfer();
+            archivos.forEach(function (a) { transferencia.items.add(a); });
+            input.files = transferencia.files;
+        }
+
+        previews.querySelectorAll('img').forEach(function (img) { URL.revokeObjectURL(img.src); });
+        previews.innerHTML = '';
+        archivos.forEach(function (archivo, i) {
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(archivo);
+            img.alt = 'Imagen ' + (i + 1);
+            previews.appendChild(img);
+        });
+
+        document.getElementById('dropzoneText').textContent = archivos.length === 1
+            ? '1 imagen elegida (haz clic para cambiarla)'
+            : archivos.length + ' imágenes elegidas (haz clic para cambiarlas)';
+        document.getElementById('textoBotonAnalizar').textContent =
+            archivos.length === 1 ? 'Analizar Imagen' : 'Analizar ' + archivos.length + ' Imágenes';
+
         if (submitBtn) {
             submitBtn.disabled = false;
         }
     }
 
-    /* ---- 1b. Enviar la imagen a analizar ----
-       Vercel no acepta envíos de más de ~4,5 MB. Si la imagen pesa más
-       de 4 MB, se achica en el navegador (máx. 2048 px por lado, mucho
-       más que los 512x320 que usa el modelo) antes de enviarla. */
+    /* ---- 1b. Enviar las imágenes a analizar ----
+       Vercel no acepta envíos de más de ~4,5 MB EN TOTAL. Si las imágenes
+       pesan más que eso, se achican en el navegador antes de enviarlas
+       (cada una se reduce hasta caber en su parte del límite; siempre
+       queda mucho más grande que los 512x320 que usa el modelo). */
     const formAnalisis = document.getElementById('uploadForm');
-    const LIMITE_BYTES = 4 * 1024 * 1024;
+    const LIMITE_TOTAL = 4 * 1024 * 1024;
     const LADO_MAXIMO = 2048;
+    const LADO_MINIMO = 900;
 
     function canvasABlob(canvas, tipo, calidad) {
         return new Promise(function (resolver) {
@@ -62,24 +85,30 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    async function reducirImagen(archivo) {
+    async function reducirImagen(archivo, limite, numero) {
         const bitmap = await createImageBitmap(archivo);
-        const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height));
+        let lado = LADO_MAXIMO;
+        let blob, nombre;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(bitmap.width * escala);
-        canvas.height = Math.round(bitmap.height * escala);
+        // Se prueba PNG y luego JPEG; si aún pesa mucho, se achica de a poco
+        while (true) {
+            const escala = Math.min(1, lado / Math.max(bitmap.width, bitmap.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(bitmap.width * escala);
+            canvas.height = Math.round(bitmap.height * escala);
 
-        const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 
-        let blob = await canvasABlob(canvas, 'image/png');
-        let nombre = 'mamografia.png';
-
-        if (blob.size > LIMITE_BYTES) {
-            blob = await canvasABlob(canvas, 'image/jpeg', 0.92);
-            nombre = 'mamografia.jpg';
+            blob = await canvasABlob(canvas, 'image/png');
+            nombre = 'mamografia_' + numero + '.png';
+            if (blob.size > limite) {
+                blob = await canvasABlob(canvas, 'image/jpeg', 0.9);
+                nombre = 'mamografia_' + numero + '.jpg';
+            }
+            if (blob.size <= limite || lado <= LADO_MINIMO) break;
+            lado = Math.max(LADO_MINIMO, Math.round(lado * 0.8));
         }
 
         return new File([blob], nombre, { type: blob.type });
@@ -88,30 +117,36 @@ document.addEventListener("DOMContentLoaded", function () {
     if (formAnalisis && input && submitBtn) {
         formAnalisis.addEventListener('submit', async function (e) {
 
-            const archivo = input.files[0];
+            const archivos = Array.from(input.files);
 
-            if (!archivo) {
+            if (!archivos.length) {
                 return;
             }
 
             submitBtn.disabled = true;
             submitBtn.innerHTML =
                 '<span class="spinner-border spinner-border-sm me-2"></span>' +
-                'Analizando imagen…';
+                (archivos.length === 1 ? 'Analizando imagen…' : 'Analizando ' + archivos.length + ' imágenes…');
 
-            if (archivo.size <= LIMITE_BYTES) {
-                return;   // se envía tal cual
+            const total = archivos.reduce(function (suma, a) { return suma + a.size; }, 0);
+            if (total <= LIMITE_TOTAL) {
+                return;   // se envían tal cual
             }
 
             e.preventDefault();
 
             try {
-                const reducido = await reducirImagen(archivo);
+                const limitePorImagen = LIMITE_TOTAL / archivos.length;
                 const transferencia = new DataTransfer();
-                transferencia.items.add(reducido);
+                for (let i = 0; i < archivos.length; i++) {
+                    const archivo = archivos[i];
+                    transferencia.items.add(
+                        archivo.size <= limitePorImagen ? archivo : await reducirImagen(archivo, limitePorImagen, i + 1)
+                    );
+                }
                 input.files = transferencia.files;
             } catch (error) {
-                console.error('No se pudo reducir la imagen:', error);
+                console.error('No se pudieron reducir las imágenes:', error);
             }
 
             formAnalisis.submit();

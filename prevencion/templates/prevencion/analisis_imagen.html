@@ -9,9 +9,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=29">
+    <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=30">
     <link rel="stylesheet" href="{% static 'prevencion/css/movimiento.css' %}?v=1">
-    <link rel="stylesheet" href="{% static 'prevencion/css/analisis_anim.css' %}?v=1">
+    <link rel="stylesheet" href="{% static 'prevencion/css/analisis_anim.css' %}?v=2">
     <style>
         .dropzone {
             border: 2px dashed #e0ccfa;
@@ -25,11 +25,89 @@
             border-color: #8b5cf6;
             background-color: rgba(139, 92, 246, 0.04);
         }
-        #previewImg {
-            max-height: 260px;
-            border-radius: 10px;
-            display: none;
+        .previews {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
         }
+        .previews:not(:empty) { margin-top: 1rem; }
+        .previews img {
+            height: 130px;
+            max-width: 45%;
+            object-fit: contain;
+            border-radius: 8px;
+            background: #000;
+        }
+        /* Resultado de cada vista (cuando se analizan varias) */
+        .vista-tarjeta {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border: 1px solid #ede9fe;
+            border-radius: 14px;
+            background: #faf8ff;
+        }
+        .vista-encabezado strong { display: block; font-size: 0.9rem; color: #7c3aed; }
+        .vista-encabezado small { display: block; font-size: 0.72rem; color: #6b7280; line-height: 1.3; }
+        .vista-mapa {
+            width: 100%;
+            aspect-ratio: 300 / 480;
+            object-fit: contain;
+            border-radius: 10px;
+            background: #000;
+        }
+        .vista-sin-analisis {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            min-height: 160px;
+            padding: 0.5rem;
+            text-align: center;
+            color: #9ca3af;
+            border-radius: 10px;
+            background: #f3f4f6;
+        }
+        .vista-sin-analisis i { font-size: 1.6rem; }
+        .vista-sin-analisis small { font-size: 0.72rem; line-height: 1.35; }
+        .resumen-vistas { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+
+        /* Nombre de la vista cuando se analiza una sola imagen */
+        .vista-unica-nombre { font-size: 0.82rem; color: #6b7280; }
+
+        /* Resumen por mama */
+        .mama-resumen {
+            height: 100%;
+            padding: 0.75rem 0.9rem;
+            border-radius: 12px;
+            background: #faf8ff;
+            border: 1px solid #ede9fe;
+        }
+        .mama-resumen-titulo { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
+        .mama-resumen-titulo strong { font-size: 0.92rem; color: #4c1d95; }
+        .mama-resumen ul { margin: 0; padding: 0; list-style: none; font-size: 0.8rem; color: #4b5563; }
+        .mama-resumen li { display: flex; justify-content: space-between; gap: 0.5rem; }
+        .mama-resumen .sin-vistas { font-size: 0.78rem; color: #9ca3af; margin: 0; }
+
+        /* Glosario */
+        .glosario-vistas th { font-size: 0.8rem; color: #6b7280; font-weight: 600; }
+        .glosario-vistas td { font-size: 0.88rem; vertical-align: middle; }
+        .sigla-vista {
+            display: inline-block;
+            min-width: 3.4rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 6px;
+            background: #ede9fe;
+            color: #6d28d9;
+            font-weight: 700;
+            text-align: center;
+        }
+        .glosario-nota { height: 100%; padding: 0.55rem 0.75rem; border-radius: 10px; background: #faf8ff; color: #4b5563; }
         .badge-riesgo-Verde { background-color: #3b8254; }
         .badge-riesgo-Amarillo { background-color: #d97706; color: #fff; }
         .badge-riesgo-Rojo { background-color: #c04862; }
@@ -47,46 +125,122 @@
         </div>
 
         {% if resultado %}
-        <!-- Resultado del análisis (la imagen no se guarda) -->
+        <!-- Resultado del análisis (las imágenes no se guardan) -->
         <!-- data-no-anim: el resultado tiene su propia coreografía (analisis_anim.js) -->
+        {% with una=resultado.una_vista v=resultado.vistas.0 %}
         <div class="card-session p-4 mb-4" id="resultado" data-no-anim>
             <h6 class="fw-bold mb-3">Resultado del análisis</h6>
 
             <div class="row g-4 align-items-start">
+                {% if una %}
                 <div class="col-md-5 text-center">
                     <div class="an-mapa">
-                        <img src="{{ resultado.mapa_calor }}" alt="Mapa de calor sobre la mama recortada" class="mapa-calor">
+                        <img src="{{ v.mapa_calor }}" alt="Mapa de calor sobre la mama recortada" class="mapa-calor">
                     </div>
+                    <p class="vista-unica-nombre mt-2 mb-0">
+                        <span class="sigla-vista">{{ v.codigo }}</span>
+                        Mama {{ v.mama }} · {{ v.nombre_vista }}
+                    </p>
                 </div>
+                {% endif %}
 
-                <div class="col-md-7">
+                <div class="{% if una %}col-md-7{% else %}col-12{% endif %}">
+                    {% if not una %}
+                    <!-- Resumen de todas las vistas -->
+                    <div class="resumen-vistas mb-2">
+                        <span class="fw-semibold small">Analizamos {{ resultado.analizadas }} vista{{ resultado.analizadas|pluralize }}:</span>
+                        {% for nivel, cantidad in resultado.conteo.items %}{% if cantidad %}
+                            <span class="badge rounded-pill badge-riesgo-{{ nivel }}">{{ cantidad }} en {{ nivel }}</span>
+                        {% endif %}{% endfor %}
+                    </div>
+                    {% endif %}
+
                     <div class="nivel-tarjeta nivel-{{ resultado.nivel }} mb-3">
-                        <strong>{{ resultado.nivel }}</strong>
-                        {% if resultado.nivel == 'Verde' %}
-                            <span class="nivel-subtitulo">Sin hallazgos llamativos</span>
-                            <p>No encontramos señales de alerta en tu imagen. Sigue con tus controles preventivos habituales.</p>
-                        {% elif resultado.nivel == 'Amarillo' %}
-                            <span class="nivel-subtitulo">Requiere atención</span>
-                            <p>Encontramos algunas zonas que conviene revisar. Es un resultado frecuente y no es motivo de alarma: coméntalo en tu próximo control.</p>
+                        <strong>{% if not una %}Resultado general: {% endif %}{{ resultado.nivel }}</strong>
+                        {% if una %}
+                            {% include "prevencion/_texto_nivel.html" with nivel=resultado.nivel %}
                         {% else %}
-                            <span class="nivel-subtitulo">Conviene consultar</span>
-                            <p>Encontramos zonas que sería bueno que revise un profesional. No significa que tengas cáncer, pero te recomendamos pedir una hora con tu médico o matrona.</p>
+                            {% include "prevencion/_texto_nivel.html" with nivel=resultado.nivel en_que="ninguna de tus vistas" %}
+                            <small class="mt-1 d-block opacity-75">El resultado general es el nivel más alto entre todas las vistas.</small>
                         {% endif %}
                     </div>
 
+                    {% if not una %}
+                    <!-- Resumen por mama -->
+                    <h6 class="fw-bold small mb-2">Resumen por mama</h6>
+                    <div class="row g-2 mb-3">
+                        {% for mama in resultado.mamas %}
+                        <div class="col-sm-6">
+                            <div class="mama-resumen">
+                                <div class="mama-resumen-titulo">
+                                    <strong>{{ mama.titulo }}</strong>
+                                    {% if mama.nivel %}<span class="badge rounded-pill badge-riesgo-{{ mama.nivel }}">{{ mama.nivel }}</span>{% endif %}
+                                </div>
+                                {% if mama.vistas %}
+                                <ul>
+                                    {% for vista in mama.vistas %}
+                                    <li><span>{{ vista.tipo }}</span><span>{{ vista.porcentaje }} / 100 · {{ vista.nivel }}</span></li>
+                                    {% endfor %}
+                                </ul>
+                                {% else %}
+                                <p class="sin-vistas">No subiste vistas de esta mama.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Mapa de calor de cada vista -->
+                    <div class="row g-3 mb-3">
+                        {% for vista in resultado.vistas %}
+                        <div class="col-6 col-md-3">
+                            <div class="vista-tarjeta{% if vista.error %} vista-error{% endif %}">
+                                {% if vista.error %}
+                                    <div class="vista-encabezado">
+                                        <strong>{{ vista.origen }}</strong>
+                                    </div>
+                                    <div class="vista-sin-analisis">
+                                        <i class="bi bi-image-alt"></i>
+                                        <small>No se pudo analizar: {{ vista.error }}</small>
+                                    </div>
+                                {% else %}
+                                    <div class="vista-encabezado">
+                                        <strong>{{ vista.codigo }}</strong>
+                                        <small>Mama {{ vista.mama }}</small>
+                                    </div>
+                                    <img src="{{ vista.mapa_calor }}" alt="Mapa de calor de la vista {{ vista.codigo }}" class="vista-mapa">
+                                    <span class="badge rounded-pill badge-riesgo-{{ vista.nivel }} align-self-start">{{ vista.nivel }}</span>
+                                    <div>
+                                        <div class="d-flex justify-content-between small text-muted mb-1">
+                                            <span>Índice</span><span><span class="an-numero" data-contar="{{ vista.porcentaje }}">{{ vista.porcentaje }}</span> / 100</span>
+                                        </div>
+                                        <div class="indice-barra">
+                                            <div class="indice-relleno nivel-{{ vista.nivel }}" style="width: {{ vista.porcentaje }}%;"></div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if una %}
                     <div class="indice-modelo mb-3">
                         <div class="d-flex justify-content-between small fw-semibold mb-1">
                             <span>Índice del modelo</span>
-                            <span><span class="an-numero" data-contar="{{ resultado.porcentaje }}">{{ resultado.porcentaje }}</span> / 100</span>
+                            <span><span class="an-numero" data-contar="{{ v.porcentaje }}">{{ v.porcentaje }}</span> / 100</span>
                         </div>
                         <div class="indice-barra">
-                            <div class="indice-relleno nivel-{{ resultado.nivel }}" style="width: {{ resultado.porcentaje }}%;"></div>
+                            <div class="indice-relleno nivel-{{ v.nivel }}" style="width: {{ v.porcentaje }}%;"></div>
                         </div>
-                        <p class="text-muted small mt-2 mb-0">
-                            Este índice <strong>no es la probabilidad de tener cáncer</strong>: indica cuánto se parece
-                            la imagen a las mamografías con cáncer con las que se entrenó el modelo.
-                        </p>
                     </div>
+                    {% endif %}
+
+                    <p class="text-muted small mb-3">
+                        El índice <strong>no es la probabilidad de tener cáncer</strong>: indica cuánto se parece
+                        {% if una %}la imagen{% else %}cada vista{% endif %} a las mamografías con cáncer con las que se entrenó el modelo.
+                    </p>
 
                     <div class="alert alert-warning small mb-3">
                         <i class="bi bi-exclamation-triangle-fill me-1"></i>
@@ -107,18 +261,19 @@
                         <div class="col-6">
                             <a href="{% url 'analisis_imagen' %}" class="btn btn-outline-secondary w-100"
                                style="padding: 0.6rem 0.5rem !important; font-size: 0.88rem !important; line-height: 1.25; height: 100%; display: flex; align-items: center; justify-content: center;">
-                                <i class="bi bi-arrow-repeat me-1"></i> Analizar otra imagen
+                                <i class="bi bi-arrow-repeat me-1"></i> Analizar {% if una %}otra imagen{% else %}otras imágenes{% endif %}
                             </a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <p class="text-muted small mt-3 mb-0">
+            <p class="text-muted small mt-2 mb-0">
                 <i class="bi bi-shield-lock me-1"></i>
-                Tu imagen se analizó en el momento y <strong>no fue guardada</strong>.
+                {% if una %}Tu imagen se analizó en el momento y <strong>no fue guardada</strong>.{% else %}Tus imágenes se analizaron en el momento y <strong>no fueron guardadas</strong>.{% endif %}
             </p>
         </div>
+        {% endwith %}
         {% endif %}
 
         <!-- 1. ¿Cómo funciona? -->
@@ -129,24 +284,24 @@
                     <div class="paso-analisis">
                         <span class="paso-numero">1</span>
                         <i class="bi bi-cloud-arrow-up-fill"></i>
-                        <strong>Sube tu imagen</strong>
-                        <small>Elige tu mamografía en formato JPG o PNG.</small>
+                        <strong>Sube tu mamografía</strong>
+                        <small>Tal como te la entregó tu centro de salud: una imagen con las 4 vistas juntas, o hasta {{ maximo_imagenes }} imágenes por separado (JPG o PNG).</small>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="paso-analisis">
                         <span class="paso-numero">2</span>
                         <i class="bi bi-cpu-fill"></i>
-                        <strong>La IA la analiza</strong>
-                        <small>Una red neuronal entrenada con ~8.000 mamografías digitales revisa la imagen.</small>
+                        <strong>La IA revisa cada mama</strong>
+                        <small>Separa las vistas (RCC, LCC, RMLO y LMLO) y analiza cada una con una red neuronal entrenada y probada con más de 8.000 mamografías reales.</small>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="paso-analisis">
                         <span class="paso-numero">3</span>
                         <i class="bi bi-clipboard2-pulse-fill"></i>
-                        <strong>Recibe tu resultado</strong>
-                        <small>Obtienes un nivel orientativo con fines educativos.</small>
+                        <strong>Entiende tu resultado</strong>
+                        <small>Un semáforo por mama y un mapa que muestra dónde miró la IA. No es un diagnóstico: úsalo para conversar con tu médico o matrona.</small>
                     </div>
                 </div>
             </div>
@@ -166,16 +321,51 @@
 
             <form method="post" enctype="multipart/form-data" id="uploadForm">
                 {% csrf_token %}
-                <div class="dropzone mb-3" id="dropzone">
+                <div class="dropzone mb-3" id="dropzone" data-maximo="{{ maximo_imagenes }}">
                     <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
-                    <p class="mb-0 mt-2 text-muted" id="dropzoneText">Haz clic o arrastra una imagen aquí (JPG, PNG)</p>
-                    <img id="previewImg" class="mt-3">
-                    <input type="file" name="imagen_original" id="imagenInput" accept="image/png,image/jpeg" class="d-none" required>
+                    <p class="mb-0 mt-2 text-muted" id="dropzoneText">Haz clic o arrastra tus imágenes aquí (JPG, PNG)</p>
+                    <small class="d-block text-muted mt-1">Hasta {{ maximo_imagenes }} imágenes: una por cada vista, o una imagen con varias vistas juntas.</small>
+                    <div class="previews" id="previews"></div>
+                    <input type="file" name="imagenes" id="imagenInput" accept="image/png,image/jpeg" class="d-none" multiple required>
                 </div>
+                <div class="alert alert-warning small py-2" id="avisoMaximo" hidden></div>
                 <button type="submit" class="btn btn-medtech w-100" id="submitBtn" disabled>
-                    <i class="bi bi-search me-1"></i> Analizar Imagen
+                    <i class="bi bi-search me-1"></i> <span id="textoBotonAnalizar">Analizar Imagen</span>
                 </button>
             </form>
+        </div>
+
+        <!-- Glosario de las vistas: siempre visible para que se entiendan las siglas -->
+        <div class="card-session p-4 mb-4">
+            <h6 class="fw-bold mb-2">¿Qué significan RCC, LCC, RMLO y LMLO?</h6>
+            <p class="text-muted small mb-3">
+                Una mamografía completa tiene <strong>4 imágenes, 2 por cada mama</strong>. Las siglas indican
+                de qué mama es cada imagen y desde qué ángulo se tomó.
+            </p>
+            <div class="table-responsive">
+                <table class="table table-sm glosario-vistas mb-3">
+                    <thead>
+                        <tr><th>Sigla</th><th>Mama</th><th>Vista</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="sigla-vista">RCC</span></td><td>Derecha</td><td>Cráneo-caudal</td></tr>
+                        <tr><td><span class="sigla-vista">LCC</span></td><td>Izquierda</td><td>Cráneo-caudal</td></tr>
+                        <tr><td><span class="sigla-vista">RMLO</span></td><td>Derecha</td><td>Medio-lateral oblicua</td></tr>
+                        <tr><td><span class="sigla-vista">LMLO</span></td><td>Izquierda</td><td>Medio-lateral oblicua</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="row g-2 small">
+                <div class="col-md-6">
+                    <div class="glosario-nota"><strong>R / L:</strong> vienen del inglés <em>Right</em> (derecha) y <em>Left</em> (izquierda).</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="glosario-nota"><strong>CC (cráneo-caudal):</strong> la mama se fotografía de arriba hacia abajo.</div>
+                </div>
+                <div class="col-12">
+                    <div class="glosario-nota"><strong>MLO (medio-lateral oblicua):</strong> la mama se fotografía en diagonal, desde el lado; por eso también se ve parte de la axila y del músculo pectoral (el triángulo claro de arriba).</div>
+                </div>
+            </div>
         </div>
 
 
@@ -271,8 +461,8 @@
     </div>
     {% endif %}
 
-    <script src="{% static 'prevencion/js/animaciones.js' %}"></script>
+    <script src="{% static 'prevencion/js/animaciones.js' %}?v=2"></script>
     <script src="{% static 'prevencion/js/movimiento.js' %}?v=1" defer></script>
-    <script src="{% static 'prevencion/js/analisis_anim.js' %}?v=1" defer></script>
+    <script src="{% static 'prevencion/js/analisis_anim.js' %}?v=2" defer></script>
 </body>
 </html>

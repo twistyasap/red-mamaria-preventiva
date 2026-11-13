@@ -27,7 +27,7 @@
     function iniciarZona() {
         var zona = document.getElementById('dropzone');
         var input = document.getElementById('imagenInput');
-        var foto = document.getElementById('previewImg');
+        var previews = document.getElementById('previews');
         var texto = document.getElementById('dropzoneText');
         var boton = document.getElementById('submitBtn');
         if (!zona || !input) return;
@@ -43,32 +43,33 @@
         }
 
         function archivoElegido() {
-            var archivo = input.files && input.files[0];
-            if (!archivo) return;
+            var archivos = input.files;
+            if (!archivos || !archivos.length) return;
 
             anillos();
 
             if (texto) {
                 texto.classList.remove('an-listo');
                 void texto.offsetWidth;            // reinicia la animación
-                texto.textContent = '¡Listo! ' + archivo.name;
+                texto.textContent = archivos.length === 1
+                    ? '¡Listo! ' + archivos[0].name
+                    : '¡Listo! ' + archivos.length + ' imágenes elegidas';
                 texto.classList.add('an-listo');
             }
 
-            // animaciones.js carga la foto; se anima cuando llega
-            if (foto) {
-                foto.classList.remove('an-aparece');
-                foto.addEventListener('load', function alCargar() {
-                    foto.removeEventListener('load', alCargar);
-                    void foto.offsetWidth;
-                    foto.classList.add('an-aparece');
+            // animaciones.js crea las miniaturas; cada una se anima cuando carga
+            if (previews) {
+                previews.querySelectorAll('img').forEach(function (foto, i) {
+                    foto.style.animationDelay = (i * 0.12).toFixed(2) + 's';
+                    foto.addEventListener('load', function () { foto.classList.add('an-aparece'); }, { once: true });
                 });
             }
 
             if (boton) boton.classList.add('an-pulso');
         }
 
-        input.addEventListener('change', archivoElegido);
+        // Se espera un instante para que animaciones.js cree las miniaturas primero
+        input.addEventListener('change', function () { setTimeout(archivoElegido, 0); });
         // El "drop" asigna input.files sin disparar "change"
         zona.addEventListener('drop', function () { setTimeout(archivoElegido, 0); });
     }
@@ -160,7 +161,6 @@
     function iniciarCargando() {
         var form = document.getElementById('uploadForm');
         var input = document.getElementById('imagenInput');
-        var foto = document.getElementById('previewImg');
         if (!form || !input) return;
 
         var velo = null, timers = [];
@@ -168,7 +168,10 @@
         form.addEventListener('submit', function () {
             if (!input.files || !input.files[0] || velo) return;
 
-            var src = foto && foto.src && foto.style.display !== 'none' ? foto.src : '';
+            // En el escáner se muestra la primera miniatura
+            var foto = document.querySelector('#previews img');
+            var src = foto ? foto.src : '';
+            var varias = input.files.length > 1;
             var puntos = '';
             [[30, 35], [62, 48], [44, 70], [70, 25], [38, 55]].forEach(function (p, i) {
                 puntos += '<span class="an-punto" style="left:' + p[0] + '%;top:' + p[1] +
@@ -190,10 +193,12 @@
                         '<div class="an-linea"></div>' +
                     '</div>' +
                     redNeuronal() +
-                    '<p class="an-cargando-titulo">Analizando tu mamografía</p>' +
+                    '<p class="an-cargando-titulo">' +
+                        (varias ? 'Analizando tus ' + input.files.length + ' imágenes' : 'Analizando tu mamografía') + '</p>' +
                     '<p class="an-mensaje">' + MENSAJES[0] + '</p>' +
                     '<div class="an-progreso"><span></span></div>' +
-                    '<p class="an-cargando-pie"><i class="bi bi-shield-lock me-1"></i>Tu imagen no se guarda.</p>' +
+                    '<p class="an-cargando-pie"><i class="bi bi-shield-lock me-1"></i>' +
+                        (varias ? 'Tus imágenes no se guardan.' : 'Tu imagen no se guarda.') + '</p>' +
                 '</div>';
             document.body.appendChild(velo);
 
@@ -240,9 +245,8 @@
             setTimeout(function () { res.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
         }
 
-        // Contador 0 → índice, sincronizado con la barra
-        var numero = res.querySelector('[data-contar]');
-        if (numero) {
+        // Contador 0 → índice, sincronizado con la barra (uno por vista)
+        res.querySelectorAll('[data-contar]').forEach(function (numero) {
             var meta = parseInt(numero.getAttribute('data-contar'), 10) || 0;
             if (reducir) {
                 numero.textContent = meta;
@@ -261,7 +265,7 @@
                     requestAnimationFrame(paso);
                 }, 1100);
             }
-        }
+        });
 
         // Lazos que salen de la tarjeta, solo con resultado Verde
         var tarjeta = res.querySelector('.nivel-tarjeta.nivel-Verde');

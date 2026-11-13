@@ -86,7 +86,7 @@
 }
 
 /* ---------- 2. Vista previa ---------- */
-#previewImg.an-aparece {
+#previews img.an-aparece {
     animation: an-foto-entra .7s cubic-bezier(.34, 1.56, .64, 1) both;
     box-shadow: 0 10px 28px rgba(30, 22, 51, .22);
 }

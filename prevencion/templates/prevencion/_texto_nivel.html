@@ -1,0 +1,10 @@
+{% if nivel == 'Verde' %}
+    <span class="nivel-subtitulo">Sin hallazgos llamativos</span>
+    <p>No encontramos señales de alerta en {{ en_que|default:"tu imagen" }}. Sigue con tus controles preventivos habituales.</p>
+{% elif nivel == 'Amarillo' %}
+    <span class="nivel-subtitulo">Requiere atención</span>
+    <p>Encontramos algunas zonas que conviene revisar. Es un resultado frecuente y no es motivo de alarma: coméntalo en tu próximo control.</p>
+{% else %}
+    <span class="nivel-subtitulo">Conviene consultar</span>
+    <p>Encontramos zonas que sería bueno que revise un profesional. No significa que tengas cáncer, pero te recomendamos pedir una hora con tu médico o matrona.</p>
+{% endif %}

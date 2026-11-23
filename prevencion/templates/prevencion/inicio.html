@@ -145,7 +145,7 @@
 
     <!-- Pestaña flotante del Asistente Virtual -->
     <button type="button" class="chat-widget-btn" id="toggleChatBtn" aria-label="Hablar con Sonia">
-        <i class="bi bi-robot fs-5"></i>
+        {% include "prevencion/_avatar_sonia.html" with tam=30 %}
         <span>Hablar con Sonia</span>
     </button>
 
@@ -153,7 +153,7 @@
     <div class="chat-widget-box" id="chatWidgetBox">
         <div class="chat-widget-header">
             <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-robot fs-5"></i>
+                {% include "prevencion/_avatar_sonia.html" with tam=34 %}
                 <strong class="mb-0">Asistente Sonia</strong>
             </div>
             <button type="button" class="btn-close btn-close-white" id="closeChatBtn" aria-label="Cerrar"></button>

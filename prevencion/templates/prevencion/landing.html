@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="{% static 'prevencion/css/estilos.css' %}?v=30">
     <link rel="stylesheet" href="{% static 'prevencion/css/movimiento.css' %}?v=1">
 
-    <link rel="stylesheet" href="{% static 'prevencion/css/landing.css' %}?v=6">
+    <link rel="stylesheet" href="{% static 'prevencion/css/landing.css' %}?v=8">
 </head>
 <body>
     {% include "prevencion/_fondo_animado.html" %}
@@ -39,6 +39,7 @@
                     <li class="nav-item"><a class="nav-link" href="#senales">Señales</a></li>
                     <li class="nav-item"><a class="nav-link" href="#datos">Datos</a></li>
                     <li class="nav-item"><a class="nav-link" href="#nosotros">Sobre nosotros</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#informate">Infórmate</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'transparencia' %}"><i class="bi bi-shield-lock me-1"></i>Transparencia</a></li>
                 </ul>
                 {% if user.is_authenticated %}
@@ -262,6 +263,70 @@
                         <h5 class="fw-semibold">Asistente virtual</h5>
                         <p class="text-muted mb-0">Resuelve tus dudas en cualquier momento con nuestro asistente, con lenguaje simple y sin juicios.</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== FUENTES OFICIALES ===================== -->
+    <section id="informate" class="seccion pt-0">
+        <div class="container">
+            <div class="text-center mb-5 aparece">
+                <span class="pill mb-3"><i class="bi bi-journal-medical"></i> Infórmate</span>
+                <h2 class="seccion-titulo">Infórmate en fuentes oficiales</h2>
+                <p class="seccion-sub mt-3">
+                    Lo que encuentras en esta página se basa en información de organismos de salud.
+                    Aquí puedes revisarla directamente en su origen.
+                </p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-sm-6 col-lg-3 aparece">
+                    <a class="tarjeta fuente-tarjeta" href="https://www.who.int/es/news-room/fact-sheets/detail/breast-cancer" target="_blank" rel="noopener noreferrer">
+                        <div class="icono-circulo"><i class="bi bi-globe-americas"></i></div>
+                        <span class="fuente-origen">Organización Mundial de la Salud</span>
+                        <h6 class="fw-semibold">Datos sobre el cáncer de mama</h6>
+                        <p class="text-muted small mb-3">Factores de riesgo, síntomas, detección y tratamiento, con cifras mundiales.</p>
+                        <span class="fuente-ir">Visitar OMS <i class="bi bi-box-arrow-up-right"></i></span>
+                    </a>
+                </div>
+                <div class="col-sm-6 col-lg-3 aparece">
+                    <a class="tarjeta fuente-tarjeta" href="https://auge.minsal.cl/problemasdesalud/index/8" target="_blank" rel="noopener noreferrer">
+                        <div class="icono-circulo"><i class="bi bi-hospital"></i></div>
+                        <span class="fuente-origen">Ministerio de Salud de Chile</span>
+                        <h6 class="fw-semibold">El cáncer de mama es GES</h6>
+                        <p class="text-muted small mb-3">Está cubierto por las Garantías Explícitas en Salud para personas de 15 años y más.</p>
+                        <span class="fuente-ir">Visitar MINSAL <i class="bi bi-box-arrow-up-right"></i></span>
+                    </a>
+                </div>
+                <div class="col-sm-6 col-lg-3 aparece">
+                    <a class="tarjeta fuente-tarjeta" href="https://www.superdesalud.gob.cl/orientacion-en-salud/cancer-de-mama/" target="_blank" rel="noopener noreferrer">
+                        <div class="icono-circulo"><i class="bi bi-shield-check"></i></div>
+                        <span class="fuente-origen">Superintendencia de Salud</span>
+                        <h6 class="fw-semibold">Tus derechos GES</h6>
+                        <p class="text-muted small mb-3">Plazos máximos de atención y cobertura en Fonasa e Isapre si hay sospecha o diagnóstico.</p>
+                        <span class="fuente-ir">Visitar Superintendencia <i class="bi bi-box-arrow-up-right"></i></span>
+                    </a>
+                </div>
+                <div class="col-sm-6 col-lg-3 aparece">
+                    <a class="tarjeta fuente-tarjeta" href="https://www.falp.org/landing/cancer-de-mama/" target="_blank" rel="noopener noreferrer">
+                        <div class="icono-circulo"><i class="bi bi-heart-pulse"></i></div>
+                        <span class="fuente-origen">Fundación Arturo López Pérez</span>
+                        <h6 class="fw-semibold">Prevención y tratamiento</h6>
+                        <p class="text-muted small mb-3">Síntomas, prevención y tratamiento explicados por especialistas en cáncer.</p>
+                        <span class="fuente-ir">Visitar FALP <i class="bi bi-box-arrow-up-right"></i></span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Aviso: la página es orientativa -->
+            <div class="aviso-orientativo mt-4 aparece">
+                <i class="bi bi-info-circle-fill"></i>
+                <div>
+                    <strong>Esta página es orientativa.</strong>
+                    Red Mamaria Preventiva es una herramienta educativa: no entrega diagnósticos ni reemplaza
+                    la evaluación de un médico, matrona o especialista. Si notas un cambio en tus mamas o tienes
+                    dudas sobre tu salud, consulta en tu CESFAM o centro de salud.
                 </div>
             </div>
         </div>

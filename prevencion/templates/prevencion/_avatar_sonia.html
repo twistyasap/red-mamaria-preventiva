@@ -1,0 +1,37 @@
+{% comment %}
+  Cara de Sonia (ilustración propia en SVG). Uso:
+  {% include "prevencion/_avatar_sonia.html" with tam=34 %}
+  Pestañea con una animación SVG, sin CSS externo.
+{% endcomment %}
+<span class="avatar-sonia" aria-hidden="true"
+      style="display:inline-flex; flex-shrink:0; width:{{ tam|default:36 }}px; height:{{ tam|default:36 }}px; border-radius:50%; overflow:hidden; background:#f5f0ff; border:2px solid #ffffff; box-shadow:0 2px 8px rgba(76, 29, 149, .25);">
+    <svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" fill="#f5f0ff"/>
+        <!-- pelo (atrás) -->
+        <path d="M22 50 C20 12 80 12 78 50 L80 84 C66 90 34 90 20 84 Z" fill="#4a2c2a"/>
+        <!-- cuello y delantal -->
+        <rect x="43" y="64" width="14" height="14" rx="5" fill="#e8b48f"/>
+        <path d="M6 112 C6 86 26 75 50 75 C74 75 94 86 94 112 Z" fill="#ffffff"/>
+        <path d="M41 76 L50 91 L59 76 Z" fill="#8b5cf6"/>
+        <path d="M39 77 C32 89 35 99 46 101" stroke="#64748b" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M61 77 C66 87 65 94 59 99" stroke="#64748b" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M74 84 c-3 0 -4 4 -2 6.5 l-2.5 4.5 2 1 2.5 -4 2.5 4 2 -1 -2.5 -4.5 c2 -2.5 1 -6.5 -2 -6.5 z" fill="#ec4899"/>
+        <!-- orejas y cara -->
+        <circle cx="30" cy="52" r="4" fill="#f0bd98"/>
+        <circle cx="70" cy="52" r="4" fill="#f0bd98"/>
+        <ellipse cx="50" cy="50" rx="20" ry="22" fill="#f6c9a8"/>
+        <!-- flequillo -->
+        <path d="M30 48 C28 29 42 24 52 26 C65 28 73 37 70 50 C63 41 52 37 41 39 C36 41 32 44 30 48 Z" fill="#4a2c2a"/>
+        <!-- ojos (pestañean) -->
+        <ellipse cx="43" cy="52" rx="2.4" ry="3" fill="#2d1b1a">
+            <animate attributeName="ry" values="3;3;0.3;3" keyTimes="0;0.94;0.96;1" dur="4.5s" repeatCount="indefinite"/>
+        </ellipse>
+        <ellipse cx="57" cy="52" rx="2.4" ry="3" fill="#2d1b1a">
+            <animate attributeName="ry" values="3;3;0.3;3" keyTimes="0;0.94;0.96;1" dur="4.5s" repeatCount="indefinite"/>
+        </ellipse>
+        <!-- mejillas y sonrisa -->
+        <circle cx="38" cy="59" r="3.5" fill="#f9a8b8" opacity=".6"/>
+        <circle cx="62" cy="59" r="3.5" fill="#f9a8b8" opacity=".6"/>
+        <path d="M44 60 Q50 66 56 60" stroke="#9f3a4b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    </svg>
+</span>

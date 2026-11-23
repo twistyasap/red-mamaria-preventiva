@@ -285,3 +285,42 @@ footer {
     .seccion { padding: 3rem 0; }
     .hero-visual { padding: 1.75rem; }
 }
+
+/* ---------- Fuentes oficiales ---------- */
+.fuente-tarjeta {
+    display: flex;
+    flex-direction: column;
+    color: var(--text-dark);
+    text-decoration: none;
+}
+.fuente-tarjeta:hover { color: var(--text-dark); }
+.fuente-origen {
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--purple-600);
+    margin-bottom: .35rem;
+}
+.fuente-ir {
+    margin-top: auto;
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--purple-600);
+}
+.fuente-ir i { font-size: .75rem; }
+.aviso-orientativo {
+    display: flex;
+    gap: .9rem;
+    align-items: flex-start;
+    padding: 1.1rem 1.4rem;
+    border-radius: var(--radius-lg);
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #78350f;
+}
+.aviso-orientativo i {
+    font-size: 1.35rem;
+    color: #d97706;
+    margin-top: .1rem;
+}

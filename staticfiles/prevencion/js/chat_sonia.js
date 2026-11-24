@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // =========================
     // FORMATO DE RESPUESTAS
-    // (Markdown básico de Gemini)
+    // (Markdown básico que escribe la IA)
     // =========================
 
     // Se escapa todo el HTML primero, así el texto de la IA
@@ -57,6 +57,25 @@ document.addEventListener("DOMContentLoaded", function () {
             .replace(/(^|[^*\w])\*(?!\s)([^*]+?)\*(?!\*)/g, "$1<em>$2</em>");
     }
 
+    // Celdas de una fila de tabla ("| a | b |"), o null si no es una fila
+    function celdasTabla(linea) {
+
+        if (!/^\|.*\|$/.test(linea)) {
+            return null;
+        }
+
+        return linea.slice(1, -1).split("|").map(function (celda) {
+            return celda.trim();
+        });
+    }
+
+    // Fila "|---|:---:|" que separa el encabezado del resto de la tabla
+    function esSeparadorTabla(celdas) {
+        return Boolean(celdas) && celdas.every(function (celda) {
+            return /^:?-{2,}:?$/.test(celda);
+        });
+    }
+
     // Convierte el texto en párrafos y listas (con viñetas o numeradas)
     function formatearMarkdown(texto) {
 
@@ -71,22 +90,55 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
-        lineas.forEach(function (linea) {
+        function abrirLista(tipoLista) {
+            if (listaAbierta !== tipoLista) {
+                cerrarLista();
+                html.push("<" + tipoLista + ">");
+                listaAbierta = tipoLista;
+            }
+        }
+
+        lineas.forEach(function (linea, i) {
 
             const limpia = linea.trim();
             const vineta = limpia.match(/^[*\-•]\s+(.*)$/);
             const numero = limpia.match(/^\d+[.)]\s+(.*)$/);
             const titulo = limpia.match(/^#{1,6}\s+(.*)$/);
+            const fila = celdasTabla(limpia);
+
+            // Línea separadora (---): no se muestra
+            if (/^(-{3,}|\*{3,}|_{3,})$/.test(limpia)) {
+                cerrarLista();
+                return;
+            }
+
+            // Las tablas no caben bien en la burbuja del chat: cada fila se
+            // muestra como un punto de lista ("primera celda: el resto") y
+            // se omite el encabezado.
+            if (fila) {
+
+                const siguiente = celdasTabla((lineas[i + 1] || "").trim());
+
+                if (esSeparadorTabla(fila) || esSeparadorTabla(siguiente)) {
+                    return;
+                }
+
+                const resto = fila.slice(1).filter(Boolean);
+
+                abrirLista("ul");
+                html.push(
+                    "<li><strong>" +
+                    formatoEnLinea(fila[0].replace(/\*\*/g, "")) +
+                    "</strong>" +
+                    (resto.length ? ": " + resto.map(formatoEnLinea).join(" · ") : "") +
+                    "</li>"
+                );
+                return;
+            }
 
             if (vineta || numero) {
 
-                const tipoLista = vineta ? "ul" : "ol";
-
-                if (listaAbierta !== tipoLista) {
-                    cerrarLista();
-                    html.push("<" + tipoLista + ">");
-                    listaAbierta = tipoLista;
-                }
+                abrirLista(vineta ? "ul" : "ol");
 
                 html.push(
                     "<li>" + formatoEnLinea((vineta || numero)[1]) + "</li>"
@@ -169,7 +221,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // =========================
     // BLOQUEAR INPUT MIENTRAS
-    // GEMINI RESPONDE
+    // SONIA RESPONDE
     // =========================
 
     function bloquearChat(bloqueado) {
@@ -238,10 +290,44 @@ document.addEventListener("DOMContentLoaded", function () {
     // PEDIR RESPUESTA A SONIA
     // =========================
 
-    // Hace UN intento. Retorna { ok, respuesta, respaldo }.
-    // Si Gemini no responde, el servidor entrega una respuesta de
-    // respaldo (respaldo: true) en vez de un error.
-    async function consultarSonia(texto) {
+    const ERROR_CONEXION =
+        "No se pudo conectar con el asistente. " +
+        "Intenta nuevamente en unos segundos.";
+
+    // Hace UN intento y lee la respuesta a medida que el servidor la
+    // envía (streaming): una línea JSON por evento.
+    //   {"texto": "..."}               -> trozo de la respuesta
+    //   {"fin": true, "respaldo": ...} -> terminó
+    // Llama a alRecibirTexto(textoAcumulado) con cada trozo.
+    // Retorna { ok, respuesta, respaldo, completa }.
+    async function consultarSonia(texto, alRecibirTexto) {
+
+        let respuesta = "";
+        let fin = null;
+
+        function procesarLinea(linea) {
+
+            if (!linea.trim()) {
+                return;
+            }
+
+            let evento;
+
+            try {
+                evento = JSON.parse(linea);
+            } catch (error) {
+                return;
+            }
+
+            if (evento.texto) {
+                respuesta += evento.texto;
+                alRecibirTexto(respuesta);
+            }
+
+            if (evento.fin) {
+                fin = evento;
+            }
+        }
 
         try {
 
@@ -257,89 +343,139 @@ document.addEventListener("DOMContentLoaded", function () {
                 }),
             });
 
-            let data;
+            const tipo = response.headers.get("Content-Type") || "";
 
-            try {
-                data = await response.json();
-            } catch (error) {
-                // Respuesta que no es JSON (por ejemplo, el servidor se
-                // demoró demasiado).
-                return {
-                    ok: false,
-                    respuesta: "No se pudo conectar con el asistente. " +
-                        "Intenta nuevamente en unos segundos."
-                };
-            }
+            // Errores del servidor (JSON) o la sesión expiró (HTML)
+            if (!response.ok || !tipo.includes("ndjson") || !response.body) {
 
-            if (!response.ok || data.es_error || !data.respuesta) {
+                let data = {};
+
+                try {
+                    data = await response.json();
+                } catch (error) {
+                    // No es JSON
+                }
 
                 console.error("Error de Sonia:", response.status, data);
 
                 return {
                     ok: false,
-                    respuesta: data.respuesta || data.error ||
-                        "No pude generar una respuesta en este momento. " +
-                        "Intenta nuevamente."
+                    respuesta: data.respuesta || data.error || ERROR_CONEXION
                 };
             }
 
-            return {
-                ok: true,
-                respuesta: data.respuesta,
-                respaldo: Boolean(data.respaldo)
-            };
+            const lector = response.body.getReader();
+            const decodificador = new TextDecoder();
+            let pendiente = "";
+
+            while (true) {
+
+                const { value, done } = await lector.read();
+
+                if (done) {
+                    break;
+                }
+
+                pendiente += decodificador.decode(value, { stream: true });
+
+                const lineas = pendiente.split("\n");
+                pendiente = lineas.pop();
+                lineas.forEach(procesarLinea);
+            }
+
+            procesarLinea(pendiente + decodificador.decode());
 
         } catch (error) {
 
-            // Sin conexión o la petición no llegó al servidor
+            // Sin conexión, o se cortó a la mitad de la respuesta
             console.error("Error al comunicarse con Sonia:", error);
-
-            return {
-                ok: false,
-                respuesta: "No se pudo conectar con el asistente. " +
-                    "Intenta nuevamente en unos segundos."
-            };
         }
+
+        if (!respuesta) {
+            return { ok: false, respuesta: ERROR_CONEXION };
+        }
+
+        return {
+            ok: true,
+            respuesta: respuesta,
+            respaldo: Boolean(fin && fin.respaldo),
+            completa: Boolean(fin && !fin.incompleta)
+        };
     }
 
     // Pide la respuesta (un solo intento, para no gastar llamadas a
-    // Gemini) y muestra el resultado en el chat.
+    // la IA) y la va mostrando en el chat mientras se escribe.
     async function responderMensaje(texto) {
 
         mostrarEscribiendo();
         bloquearChat(true);
 
-        const resultado = await consultarSonia(texto);
+        let burbuja = null;
+        let ultimoTexto = "";
+        let pintadoPendiente = false;
+
+        // Repinta como máximo una vez por cuadro de pantalla, aunque
+        // lleguen muchos trozos seguidos.
+        function pintar() {
+            pintadoPendiente = false;
+            burbuja.innerHTML = formatearMarkdown(ultimoTexto);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        const resultado = await consultarSonia(texto, function (acumulado) {
+
+            ultimoTexto = acumulado;
+
+            if (!burbuja) {
+                ocultarEscribiendo();
+                burbuja = agregarMensaje("", "sonia");
+            }
+
+            if (burbuja && !pintadoPendiente) {
+                pintadoPendiente = true;
+                requestAnimationFrame(pintar);
+            }
+        });
 
         ocultarEscribiendo();
         bloquearChat(false);
 
-        if (resultado.ok) {
+        if (burbuja) {
+            // Pintado final, por si quedó un trozo sin mostrar
+            ultimoTexto = resultado.ok ? resultado.respuesta : ultimoTexto;
+            pintar();
+        }
 
-            agregarMensaje(resultado.respuesta, "sonia");
+        if (!resultado.ok) {
+
+            if (burbuja) {
+                burbuja.remove();
+            }
+
+            mostrarErrorConReintento(resultado.respuesta, texto);
+
+        } else if (!resultado.completa) {
+
+            // Se cortó a la mitad: se deja lo que llegó y se ofrece
+            // volver a preguntar.
+            agregarBotonReintento(burbuja, texto);
+
+        } else if (!resultado.respaldo) {
 
             // Solo las respuestas de la IA pasan a formar parte de la
             // conversación (las de respaldo son información general).
-            if (!resultado.respaldo) {
-                historial.push(
-                    { rol: "usuario", texto: texto },
-                    { rol: "sonia", texto: resultado.respuesta }
-                );
-            }
-
-        } else {
-
-            mostrarErrorConReintento(resultado.respuesta, texto);
+            historial.push(
+                { rol: "usuario", texto: texto },
+                { rol: "sonia", texto: resultado.respuesta }
+            );
         }
 
         input.focus();
     }
 
-    // Mensaje de error con un botón para volver a preguntar lo mismo
-    // sin tener que escribirlo de nuevo.
-    function mostrarErrorConReintento(textoError, textoPregunta) {
-
-        const mensaje = agregarMensaje(textoError, "sonia");
+    // Botón para volver a preguntar lo mismo sin tener que
+    // escribirlo de nuevo.
+    function agregarBotonReintento(mensaje, textoPregunta) {
 
         if (!mensaje) {
             return;
@@ -357,6 +493,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         mensaje.appendChild(boton);
         messages.scrollTop = messages.scrollHeight;
+    }
+
+    function mostrarErrorConReintento(textoError, textoPregunta) {
+        agregarBotonReintento(agregarMensaje(textoError, "sonia"), textoPregunta);
     }
 
     // =========================

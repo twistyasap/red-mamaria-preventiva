@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        api_key = (settings.GEMINI_API_KEY or '').strip()
+        api_key = settings.GEMINI_API_KEY
 
         if not api_key:
             raise CommandError(

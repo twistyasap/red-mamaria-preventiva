@@ -1,8 +1,6 @@
 import json
-import time
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
-import requests
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
@@ -10,7 +8,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -18,7 +16,7 @@ from django.core.validators import validate_email
 
 from .forms import FormularioUsuario, FormularioPerfil
 from .models import Perfil, PreguntaEducativa, Recordatorio, RecordatorioListo
-from .services.respuestas_respaldo import obtener_respuesta_respaldo
+from .services.sonia_ia import generar_respuesta, modelos_disponibles
 from .services.correos import enviar_bienvenida
 from .services.analisis_cnn import (
     analizar_mamografias,
@@ -435,7 +433,8 @@ def asistente_virtual(request):
 
 
 # ============================================================
-# CHATBOT SONIA - GEMINI
+# CHATBOT SONIA
+# (la conexión con la IA está en services/sonia_ia.py)
 # ============================================================
 
 def respuesta_error_sonia(mensaje, detalle, status):
@@ -452,89 +451,21 @@ def respuesta_error_sonia(mensaje, detalle, status):
     )
 
 
-MAX_MENSAJES_HISTORIAL = 10
-MAX_LARGO_MENSAJE_HISTORIAL = 2000
+def stream_sonia(historial, mensaje_usuario):
+    """
+    Envía la respuesta al navegador como líneas JSON (una por evento):
+      {"texto": "..."}                -> trozo de la respuesta
+      {"fin": true, "respaldo": ...}  -> fin de la respuesta
+    """
 
+    for tipo, valor in generar_respuesta(historial, mensaje_usuario):
 
-def armar_historial(historial):
-
-    if not isinstance(historial, list):
-        return []
-
-    roles = {
-        'usuario': 'user',
-        'sonia': 'model',
-    }
-
-    contents = []
-
-    for item in historial[-MAX_MENSAJES_HISTORIAL:]:
-
-        if not isinstance(item, dict):
-            continue
-
-        rol = roles.get(item.get('rol'))
-        texto = item.get('texto')
-
-        if not rol or not isinstance(texto, str) or not texto.strip():
-            continue
-
-        texto = texto.strip()[:MAX_LARGO_MENSAJE_HISTORIAL]
-
-        if contents and contents[-1]['role'] == rol:
-            contents[-1]['parts'][0]['text'] += '\n\n' + texto
+        if tipo == 'texto':
+            evento = {'texto': valor}
         else:
-            contents.append({'role': rol, 'parts': [{'text': texto}]})
+            evento = {'fin': True, **valor}
 
-    while contents and contents[0]['role'] != 'user':
-        contents.pop(0)
-
-    if contents and contents[-1]['role'] == 'user':
-        contents.pop()
-
-    return contents
-
-
-def consultar_gemini(modelo, payload, headers, timeout=20):
-
-    url = (
-        "https://generativelanguage.googleapis.com/"
-        f"v1beta/models/{modelo}:generateContent"
-    )
-
-    try:
-        response = requests.post(
-            url,
-            json=payload,
-            headers=headers,
-            timeout=timeout
-        )
-
-    except requests.exceptions.RequestException as error:
-        return None, f"{modelo}: error de conexión ({error})", True
-
-    try:
-        datos = response.json()
-
-    except ValueError:
-        return (
-            None,
-            f"{modelo}: respuesta no JSON (HTTP {response.status_code})",
-            True
-        )
-
-    if response.status_code == 200:
-        return datos, None, False
-
-    mensaje_error = datos.get('error', {}).get('message', '')
-    error = f"{modelo}: HTTP {response.status_code} - {mensaje_error}"
-
-    if response.status_code in [401, 403] or (
-        'api key' in mensaje_error.lower()
-    ):
-        return None, error, None
-
-    return None, error, response.status_code in [429, 500, 502, 503, 504]
+        yield json.dumps(evento, ensure_ascii=False) + '\n'
 
 
 @login_required(login_url='iniciar_sesion')
@@ -545,6 +476,9 @@ def asistente_virtual_mensaje(request):
         data = json.loads(request.body or '{}')
 
     except json.JSONDecodeError:
+        data = None
+
+    if not isinstance(data, dict):
         return JsonResponse(
             {
                 'error': 'Formato JSON inválido.'
@@ -552,11 +486,9 @@ def asistente_virtual_mensaje(request):
             status=400
         )
 
-    mensaje_usuario = (
-        data.get('mensaje') or ''
-    ).strip()
+    mensaje_usuario = data.get('mensaje')
 
-    if not mensaje_usuario:
+    if not isinstance(mensaje_usuario, str) or not mensaje_usuario.strip():
         return JsonResponse(
             {
                 'error': 'Mensaje vacío.'
@@ -564,254 +496,29 @@ def asistente_virtual_mensaje(request):
             status=400
         )
 
-    api_key = (
-        getattr(settings, 'GEMINI_API_KEY', None) or ''
-    ).strip()
-
-    if not api_key:
+    if not modelos_disponibles():
         print(
-            "SONIA ERROR: No se encontró GEMINI_API_KEY. "
-            "Agrégala al archivo .env o a las variables de Vercel."
+            "SONIA ERROR: No hay GROQ_API_KEY ni GEMINI_API_KEY. "
+            "Agrégalas al archivo .env o a las variables de Vercel."
         )
 
         return respuesta_error_sonia(
             'La inteligencia artificial no está disponible '
             'en este momento.',
-            'Falta GEMINI_API_KEY en el archivo .env.',
+            'Falta GROQ_API_KEY o GEMINI_API_KEY en el archivo .env.',
             status=500
         )
 
-    prompt_sistema = """
-Eres Sonia, una asistente virtual educativa especializada
-en prevención, educación y orientación general sobre salud
-mamaria y cáncer de mama.
-
-Tu función es ayudar a los usuarios de una plataforma
-educativa sobre prevención del cáncer de mama.
-
-Debes responder siempre en español.
-
-CARACTERÍSTICAS DE TUS RESPUESTAS:
-
-- Sé clara.
-- Sé amable.
-- Sé cercana.
-- Sé profesional.
-- Utiliza lenguaje fácil de comprender.
-- Entrega respuestas relativamente breves.
-- Evita respuestas excesivamente largas.
-- Puedes utilizar listas cuando sea útil.
-- Evita alarmar innecesariamente al usuario.
-- No inventes información médica.
-- Evita tecnicismos innecesarios.
-- Si utilizas un término médico, explícalo de forma sencilla.
-
-PUEDES RESPONDER SOBRE:
-
-- cáncer de mama
-- prevención
-- factores de riesgo
-- mamografías
-- ecografías mamarias
-- autoobservación mamaria
-- cambios o señales de alerta en las mamas
-- controles preventivos
-- hábitos saludables
-- detección temprana
-- educación en salud mamaria
-- antecedentes familiares
-- preparación para una mamografía
-- frecuencia de controles preventivos
-
-REGLAS MÉDICAS:
-
-1. No realices diagnósticos médicos definitivos.
-
-2. No afirmes que una persona tiene o no tiene cáncer.
-
-3. No reemplaces la evaluación de un médico, matrona
-   u otro profesional de salud.
-
-4. Si una persona describe un síntoma o anomalía,
-   entrega información educativa y recomienda consultar
-   con un profesional de salud.
-
-5. Si existen señales potencialmente preocupantes,
-   recomienda solicitar atención médica.
-
-6. Si corresponden al contexto chileno, puedes mencionar
-   CESFAM, consultorios, centros médicos u hospitales.
-
-7. No indiques medicamentos ni tratamientos personalizados
-   sin evaluación profesional.
-
-8. No entregues porcentajes personales de probabilidad
-   de tener cáncer basándote solamente en síntomas.
-
-9. Si una pregunta requiere evaluación clínica,
-   explica que debe ser revisada por un profesional.
-
-Si el usuario realiza una pregunta completamente ajena
-a salud mamaria o cáncer de mama, explica amablemente
-que tu función principal es orientar sobre salud mamaria.
-
-No comiences todas las respuestas diciendo "Hola".
-Responde directamente a la pregunta del usuario.
-
-Ten en cuenta los mensajes anteriores de la conversación: si el
-usuario hace una pregunta de seguimiento (por ejemplo "¿y en
-hombres?"), respóndela en relación a lo que se venía hablando.
-"""
-
-    payload = {
-        "system_instruction": {
-            "parts": [
-                {
-                    "text": prompt_sistema
-                }
-            ]
-        },
-        "contents": armar_historial(data.get('historial')) + [
-            {
-                "role": "user",
-                "parts": [
-                    {
-                        "text": mensaje_usuario
-                    }
-                ]
-            }
-        ],
-        "generationConfig": {
-            "maxOutputTokens": 4096
-        }
-    }
-
-    headers = {
-        "Content-Type": "application/json",
-        "x-goog-api-key": api_key
-    }
-
-    RONDAS = 2
-    ESPERA_ENTRE_RONDAS = 2
-    TIEMPO_ESPERA = 30
-    TIEMPO_MAXIMO_TOTAL = 60
-    inicio_tiempo = time.monotonic()
-
-    res_data = None
-    modelo_utilizado = None
-    errores = []
-    modelos_pendientes = list(settings.GEMINI_MODELS)
-    reintentables = []
-    tiempo_agotado = False
-
-    for ronda in range(1, RONDAS + 1):
-
-        if ronda > 1:
-            print(f"SONIA: todos saturados, ronda {ronda} en "
-                  f"{ESPERA_ENTRE_RONDAS} s")
-            time.sleep(ESPERA_ENTRE_RONDAS)
-
-        reintentables = []
-
-        for modelo in modelos_pendientes:
-
-            tiempo_restante = (
-                TIEMPO_MAXIMO_TOTAL - (time.monotonic() - inicio_tiempo)
-            )
-
-            if tiempo_restante < 3:
-                errores.append(
-                    f"Se alcanzó el tope de {TIEMPO_MAXIMO_TOTAL} s"
-                )
-                tiempo_agotado = True
-                break
-
-            datos, error, reintentable = consultar_gemini(
-                modelo,
-                payload,
-                headers,
-                timeout=min(TIEMPO_ESPERA, tiempo_restante)
-            )
-
-            if datos is not None:
-                res_data = datos
-                modelo_utilizado = modelo
-                break
-
-            errores.append(f"[ronda {ronda}] {error}")
-            print(f"SONIA: {errores[-1]}")
-
-            if reintentable is None:
-                reintentables = []
-                break
-
-            if reintentable:
-                reintentables.append(modelo)
-
-        if res_data is not None or not reintentables or tiempo_agotado:
-            break
-
-        modelos_pendientes = reintentables
-
-    if res_data is None:
-
-        print("SONIA: ningún modelo respondió, se usa respuesta de respaldo")
-
-        respuesta = obtener_respuesta_respaldo(mensaje_usuario)
-
-        if settings.SONIA_MOSTRAR_ERRORES:
-            respuesta += '\n\n[DEBUG] ' + (
-                '\n'.join(errores) or 'No hay modelos configurados.'
-            )
-
-        return JsonResponse(
-            {
-                'respuesta': respuesta,
-                'respaldo': True,
-            }
-        )
-
-    candidates = res_data.get('candidates') or []
-
-    if not candidates:
-
-        bloqueo = res_data.get('promptFeedback', {}).get('blockReason')
-
-        return respuesta_error_sonia(
-            'No pude generar una respuesta para ese mensaje. '
-            'Intenta formularlo de otra manera.',
-            f"{modelo_utilizado}: sin candidatos "
-            f"(blockReason={bloqueo})",
-            status=200
-        )
-
-    candidato = candidates[0]
-
-    textos = [
-        part.get('text', '')
-        for part in candidato.get('content', {}).get('parts', [])
-        if not part.get('thought')
-    ]
-
-    texto_respuesta = '\n'.join(textos).strip()
-
-    if not texto_respuesta:
-
-        return respuesta_error_sonia(
-            'No pude generar una respuesta en este momento. '
-            'Intenta nuevamente.',
-            f"{modelo_utilizado}: respuesta vacía "
-            f"(finishReason={candidato.get('finishReason')})",
-            status=200
-        )
-
-    print(f"SONIA: respuesta enviada con {modelo_utilizado}")
-
-    return JsonResponse(
-        {
-            'respuesta': texto_respuesta
-        }
+    response = StreamingHttpResponse(
+        stream_sonia(data.get('historial'), mensaje_usuario.strip()),
+        content_type='application/x-ndjson; charset=utf-8'
     )
+
+    # Que ningún proxy guarde la respuesta antes de enviarla.
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'
+
+    return response
 
 # ============================================================
 # MIS RECORDATORIOS (calendario)

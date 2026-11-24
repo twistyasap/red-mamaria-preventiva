@@ -151,7 +151,20 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY = (os.getenv("GEMINI_API_KEY") or "").strip()
+
+# Groq (gratis y muy rápido): si está configurada, Sonia usa Groq primero
+# y Gemini queda de respaldo.
+GROQ_API_KEY = (os.getenv("GROQ_API_KEY") or "").strip()
+
+GROQ_MODELS = [
+    modelo.strip()
+    for modelo in os.getenv(
+        "GROQ_MODELS",
+        "openai/gpt-oss-120b,openai/gpt-oss-20b"
+    ).split(",")
+    if modelo.strip()
+]
 
 # Muestra en el chat el detalle técnico de los errores de Sonia ([DEBUG]).
 # Solo en tu PC: en Vercel (que define la variable VERCEL) se oculta
